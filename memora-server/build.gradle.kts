@@ -5,15 +5,12 @@ plugins {
 }
 
 allprojects {
-    group = "com.memora.studio"
+    group = "com.memora"
     version = "1.0.0"
     
     repositories {
         mavenCentral()
     }
-    
-    // 统一管理依赖版本
-    extra["mybatis-plus.version"] = "3.5.8"
 }
 
 subprojects {

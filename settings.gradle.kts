@@ -1,10 +1,10 @@
-rootProject.name = "doc-studio"
+rootProject.name = "memora-agent-studio"
 
-include("doc-server-common")
-include("doc-server-manager")
-include("doc-server-start")
+include("memora-server-common")
+include("memora-server-manager")
+include("memora-server-start")
 
-project(":doc-server-common").projectDir = file("doc-server/doc-server-common")
-project(":doc-server-manager").projectDir = file("doc-server/doc-server-manager")
-project(":doc-server-start").projectDir = file("doc-server/doc-server-start")
+project(":memora-server-common").projectDir = file("memora-server/memora-server-common")
+project(":memora-server-manager").projectDir = file("memora-server/memora-server-manager")
+project(":memora-server-start").projectDir = file("memora-server/memora-server-start")
 
