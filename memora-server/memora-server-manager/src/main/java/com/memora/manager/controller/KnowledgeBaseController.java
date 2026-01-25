@@ -11,7 +11,7 @@ import com.memora.manager.vo.KnowledgeBaseVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
+
 
 import java.util.List;
 
@@ -30,87 +30,85 @@ public class KnowledgeBaseController {
      * 创建知识库
      */
     @PostMapping
-    public Mono<Result<KnowledgeBaseVO>> create(@Valid @RequestBody KnowledgeBaseCreateDTO dto) {
+    public Result<KnowledgeBaseVO> create(@Valid @RequestBody KnowledgeBaseCreateDTO dto) {
         // TODO: 从鉴权中获取userId，暂时使用DTO中的userId
         if (dto.getUserId() == null) {
             dto.setUserId(1L); // 临时默认值
         }
-        return Mono.fromSupplier(() -> knowledgeBaseService.create(dto))
-                .map(Result::success);
+        KnowledgeBaseVO result = knowledgeBaseService.create(dto);
+        return Result.success(result);
     }
     
     /**
      * 更新知识库
      */
     @PutMapping("/{id}")
-    public Mono<Result<KnowledgeBaseVO>> update(@PathVariable Long id, 
+    public Result<KnowledgeBaseVO> update(@PathVariable Long id, 
                                           @Valid @RequestBody KnowledgeBaseUpdateDTO dto) {
-        return Mono.fromSupplier(() -> knowledgeBaseService.update(id, dto))
-                .map(Result::success);
+        KnowledgeBaseVO result = knowledgeBaseService.update(id, dto);
+        return Result.success(result);
     }
     
     /**
      * 删除知识库
      */
     @DeleteMapping("/{id}")
-    public Mono<Result<Void>> delete(@PathVariable Long id) {
-        return Mono.fromRunnable(() -> knowledgeBaseService.delete(id))
-                .thenReturn(Result.success());
+    public Result<Void> delete(@PathVariable Long id) {
+        knowledgeBaseService.delete(id);
+        return Result.success();
     }
     
     /**
      * 获取知识库详情
      */
     @GetMapping("/{id}")
-    public Mono<Result<KnowledgeBaseVO>> getById(@PathVariable Long id) {
-        return Mono.fromSupplier(() -> knowledgeBaseService.getById(id))
-                .map(Result::success);
+    public Result<KnowledgeBaseVO> getById(@PathVariable Long id) {
+        KnowledgeBaseVO result = knowledgeBaseService.getById(id);
+        return Result.success(result);
     }
     
     /**
      * 分页查询知识库列表
      */
     @GetMapping
-    public Mono<Result<IPage<KnowledgeBaseVO>>> list(
+    public Result<IPage<KnowledgeBaseVO>> list(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long userId) {
-        return Mono.fromSupplier(() -> knowledgeBaseService.list(page, size, keyword, userId))
-                .map(Result::success);
+        IPage<KnowledgeBaseVO> result = knowledgeBaseService.list(page, size, keyword, userId);
+        return Result.success(result);
     }
     
     /**
      * 获取用户的知识库列表（不分页）
      */
     @GetMapping("/user/{userId}")
-    public Mono<Result<List<KnowledgeBaseVO>>> listByUserId(@PathVariable Long userId) {
-        return Mono.fromSupplier(() -> knowledgeBaseService.listByUserId(userId))
-                .map(Result::success);
+    public Result<List<KnowledgeBaseVO>> listByUserId(@PathVariable Long userId) {
+        List<KnowledgeBaseVO> result = knowledgeBaseService.listByUserId(userId);
+        return Result.success(result);
     }
     
     /**
      * 获取知识库下的文档列表
      */
     @GetMapping("/{id}/documents")
-    public Mono<Result<?>> getDocuments(
+    public Result<Object> getDocuments(
             @PathVariable Long id,
             @RequestParam(required = false) Long parentId,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String keyword) {
-        return Mono.defer(() -> {
-            if (page != null && size != null) {
-                // 分页查询
-                IPage<DocumentVO> result = documentService.list(
-                    page, size, keyword, id, parentId, null);
-                return Mono.just(Result.success(result));
-            } else {
-                // 不分页查询
-                List<DocumentVO> list = documentService.listByKnowledgeBaseId(id, parentId);
-                return Mono.just(Result.success(list));
-            }
-        });
+        if (page != null && size != null) {
+            // 分页查询
+            IPage<DocumentVO> result = documentService.list(
+                page, size, keyword, id, parentId, null);
+            return Result.success(result);
+        } else {
+            // 不分页查询
+            List<DocumentVO> list = documentService.listByKnowledgeBaseId(id, parentId);
+            return Result.success(list);
+        }
     }
 }
 

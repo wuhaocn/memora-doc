@@ -152,6 +152,51 @@ const Home = () => {
             </div>
           ) : (
             <div className={viewMode === 'grid' ? styles.grid : styles.list}>
+              {/* MemoraAI 入口卡片 */}
+              <Card
+                key="memora-ai"
+                className={`${styles.card} ${styles.memoraAiCard}`}
+                hoverable
+                onClick={() => navigate('/memora-ai')}
+              >
+                <div className={styles.cardHeader}>
+                  <div className={styles.cardIconWrapper}>
+                    <div className={styles.memoraAiIcon}>
+                      <span className={styles.robotEmoji}>🤖</span>
+                    </div>
+                  </div>
+                  <div className={styles.cardContent}>
+                    <div className={styles.cardTitleRow}>
+                      <h3 className={styles.cardTitle}>
+                        MemoraAI 智能助手
+                      </h3>
+                    </div>
+                    <p className={styles.cardDescription}>
+                      基于文档内容的智能问答、可视化和出题功能
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.cardFooter}>
+                  <div className={styles.metaGroup}>
+                    <span className={styles.meta}>
+                      <span className={styles.metaLabel}>智能问答</span>
+                    </span>
+                    <span className={styles.metaDivider}>•</span>
+                    <span className={styles.meta}>
+                      <span className={styles.metaLabel}>文档可视化</span>
+                    </span>
+                    <span className={styles.metaDivider}>•</span>
+                    <span className={styles.meta}>
+                      <span className={styles.metaLabel}>智能出题</span>
+                    </span>
+                  </div>
+                  <span className={styles.publicTag} style={{ backgroundColor: '#10B981', color: '#fff' }}>
+                    AI 功能
+                  </span>
+                </div>
+              </Card>
+
+              {/* 知识库列表 */}
               {filteredKnowledgeBases.map((kb) => {
                 const menuItems = (
                   <Menu onClick={(e) => handleKnowledgeBaseMenuClick(e, kb.id)}>

@@ -1,0 +1,174 @@
+.container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--color-primary-6);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon {
+  font-size: 28px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--color-text-2);
+  margin: 0;
+}
+
+.configSection,
+.resultSection {
+  margin-bottom: 24px;
+}
+
+.configCard,
+.resultCard {
+  border-radius: 12px;
+  border: 1px solid var(--color-border-2);
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-1);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.questionCount {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text-2);
+}
+
+.configGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  align-items: flex-end;
+}
+
+.configItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.configLabel {
+  font-size: 14px;
+  color: var(--color-text-1);
+  font-weight: 500;
+}
+
+.resultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.questionsContainer {
+  min-height: 400px;
+  position: relative;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+  color: var(--color-text-2);
+}
+
+.emptyResult {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background-color: var(--color-bg-2);
+  color: var(--color-text-3);
+  gap: 16px;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  color: var(--color-text-4);
+}
+
+.questionsTable {
+  min-height: 400px;
+}
+
+.questionContent {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.optionItem {
+  padding-left: 8px;
+}
+
+.explanation {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-2);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .configGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .resultHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .questionsTable {
+    overflow-x: auto;
+  }
+
+  .questionsContainer {
+    min-height: 300px;
+  }
+
+  .loadingContainer,
+  .emptyResult {
+    min-height: 300px;
+  }
+}
