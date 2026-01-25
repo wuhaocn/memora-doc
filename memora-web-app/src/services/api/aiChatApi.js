@@ -13,7 +13,7 @@ const mockAIResponse = (message, documentContent) => {
       const lowerMessage = message.toLowerCase()
 
       if (lowerMessage.includes('你好') || lowerMessage.includes('hello')) {
-        response = '你好！我是DeepTutor AI助手，很高兴为你服务。我可以帮助你：\n• 回答关于文档的问题\n• 生成内容建议\n• 优化文档结构\n• 翻译和改写文本\n• 生成可视化图表\n• 智能出题\n\n请告诉我你需要什么帮助？'
+        response = '你好！我是MemoraAI 智能助手，很高兴为你服务。我可以帮助你：\n• 回答关于文档的问题\n• 生成内容建议\n• 优化文档结构\n• 翻译和改写文本\n• 生成可视化图表\n• 智能出题\n\n请告诉我你需要什么帮助？'
       } else if (lowerMessage.includes('总结') || lowerMessage.includes('摘要')) {
         if (documentContent) {
           const preview = documentContent.substring(0, 200)
@@ -93,7 +93,7 @@ const mockAIResponse = (message, documentContent) => {
         response = '我可以帮你生成代码示例。请告诉我：\n• 编程语言\n• 功能需求\n\n例如："请生成一个React组件的示例代码"'
       } else {
         // 默认回复
-        response = `我理解你想了解"${message}"。\n\n作为DeepTutor AI助手，我可以帮助你：\n• 回答关于文档的问题\n• 生成和优化内容\n• 提供写作建议\n• 翻译文本\n• 生成代码示例\n• 生成可视化图表\n• 智能出题\n\n请告诉我更具体的需求，我会尽力帮助你！`
+        response = `我理解你想了解"${message}"。\n\n作为MemoraAI 智能助手，我可以帮助你：\n• 回答关于文档的问题\n• 生成和优化内容\n• 提供写作建议\n• 翻译文本\n• 生成代码示例\n• 生成可视化图表\n• 智能出题\n\n请告诉我更具体的需求，我会尽力帮助你！`
       }
 
       resolve({
@@ -169,7 +169,7 @@ export const aiChatApi = {
    * @returns {Promise}
    */
   visualize: async ({ documentId, visualizationType }) => {
-    // 在实际项目中，这里应该调用DeepTutor的可视化API
+    // 在实际项目中，这里应该调用MemoraAI的可视化API
     
     try {
       // Mock实现
@@ -245,7 +245,7 @@ export const aiChatApi = {
    * @returns {Promise}
    */
   generateQuestions: async ({ knowledgePoints, questionType, difficulty, count }) => {
-    // 在实际项目中，这里应该调用DeepTutor的题目生成API
+    // 在实际项目中，这里应该调用MemoraAI的题目生成API
     
     try {
       // Mock实现
@@ -317,7 +317,7 @@ export const aiChatApi = {
    * @returns {Promise}
    */
   exportQuestions: async ({ questionSetId, format }) => {
-    // 在实际项目中，这里应该调用DeepTutor的题目导出API
+    // 在实际项目中，这里应该调用MemoraAI的题目导出API
     
     try {
       // Mock实现
