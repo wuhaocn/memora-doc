@@ -3,9 +3,13 @@ package com.memora.manager.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.memora.common.result.Result;
 import com.memora.manager.dto.DocumentCreateDTO;
+import com.memora.manager.dto.DocumentSortDTO;
 import com.memora.manager.dto.DocumentUpdateDTO;
+import com.memora.manager.dto.SearchRequestDTO;
+import com.memora.manager.entity.DocumentVersion;
 import com.memora.manager.service.DocumentService;
 import com.memora.manager.vo.DocumentVO;
+import com.memora.manager.vo.DocumentVersionVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -86,6 +90,53 @@ public class DocumentController {
             @PathVariable Long knowledgeBaseId,
             @RequestParam(required = false) Long parentId) {
         List<DocumentVO> result = documentService.listByKnowledgeBaseId(knowledgeBaseId, parentId);
+        return Result.success(result);
+    }
+    
+    /**
+     * 更新文档排序
+     */
+    @PutMapping("/sort")
+    public Result<Void> updateSortOrder(@RequestBody List<DocumentSortDTO> sortList) {
+        return documentService.updateSortOrder(sortList);
+    }
+    
+    /**
+     * 获取文档版本列表
+     */
+    @GetMapping("/{id}/versions")
+    public Result<List<DocumentVersionVO>> getVersions(@PathVariable Long id) {
+        List<DocumentVersionVO> result = documentService.getVersions(id);
+        return Result.success(result);
+    }
+    
+    /**
+     * 获取版本详情
+     */
+    @GetMapping("/versions/{versionId}")
+    public Result<DocumentVersion> getVersionById(@PathVariable Long versionId) {
+        DocumentVersion result = documentService.getVersionById(versionId);
+        return Result.success(result);
+    }
+    
+    /**
+     * 回滚到指定版本
+     */
+    @PostMapping("/{id}/rollback/{versionId}")
+    public Result<DocumentVO> rollbackToVersion(@PathVariable Long id, @PathVariable Long versionId) {
+        DocumentVO result = documentService.rollbackToVersion(id, versionId);
+        return Result.success(result);
+    }
+    
+    /**
+     * 高级搜索文档
+     */
+    @PostMapping("/search")
+    public Result<IPage<DocumentVO>> advancedSearch(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer size,
+            @RequestBody SearchRequestDTO searchRequest) {
+        IPage<DocumentVO> result = documentService.advancedSearch(page, size, searchRequest);
         return Result.success(result);
     }
 }

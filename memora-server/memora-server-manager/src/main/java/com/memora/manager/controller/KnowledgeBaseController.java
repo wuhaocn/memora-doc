@@ -7,6 +7,7 @@ import com.memora.manager.dto.KnowledgeBaseUpdateDTO;
 import com.memora.manager.service.DocumentService;
 import com.memora.manager.service.KnowledgeBaseService;
 import com.memora.manager.vo.DocumentVO;
+import com.memora.manager.vo.KnowledgeBaseStatsVO;
 import com.memora.manager.vo.KnowledgeBaseVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -109,6 +110,48 @@ public class KnowledgeBaseController {
             List<DocumentVO> list = documentService.listByKnowledgeBaseId(id, parentId);
             return Result.success(list);
         }
+    }
+    
+    /**
+     * 获取知识库统计信息
+     */
+    @GetMapping("/stats")
+    public Result<KnowledgeBaseStatsVO> getStats(
+            @RequestParam(required = false) Long userId) {
+        KnowledgeBaseStatsVO result = knowledgeBaseService.getStats(userId);
+        return Result.success(result);
+    }
+    
+    /**
+     * 生成知识库分享链接
+     */
+    @PostMapping("/{id}/share")
+    public Result<String> generateShareLink(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "7") Integer expireDays) {
+        String shareLink = knowledgeBaseService.generateShareLink(id, expireDays);
+        return Result.success(shareLink);
+    }
+    
+    /**
+     * 根据分享token获取知识库
+     */
+    @GetMapping("/shared")
+    public Result<KnowledgeBaseVO> getByShareToken(
+            @RequestParam String token) {
+        KnowledgeBaseVO result = knowledgeBaseService.getByShareToken(token);
+        return Result.success(result);
+    }
+    
+    /**
+     * 设置知识库公开状态
+     */
+    @PutMapping("/{id}/public-status")
+    public Result<KnowledgeBaseVO> setPublicStatus(
+            @PathVariable Long id,
+            @RequestParam Integer isPublic) {
+        KnowledgeBaseVO result = knowledgeBaseService.setPublicStatus(id, isPublic);
+        return Result.success(result);
     }
 }
 
