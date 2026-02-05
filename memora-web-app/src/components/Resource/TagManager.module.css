@@ -1,0 +1,18 @@
+.container {
+  width: 100%;
+}
+
+.select {
+  margin-bottom: 12px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .actions {
+    justify-content: flex-start;
+  }
+}

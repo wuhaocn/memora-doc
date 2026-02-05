@@ -1,28 +1,76 @@
-import { Routes, Route } from 'react-router-dom'
+import React from 'react'
+import { createBrowserRouter } from 'react-router-dom'
+import Layout from '../components/Layout/Layout'
 import Home from '../pages/Home/Home'
-import KnowledgeBaseDetail from '../pages/KnowledgeBase/KnowledgeBaseDetail'
 import DocumentEdit from '../pages/Document/DocumentEdit'
+import KnowledgeBaseDetail from '../pages/KnowledgeBase/KnowledgeBaseDetail'
 import MemoraAIHome from '../pages/MemoraAI/MemoraAIHome'
 import AiQnAPage from '../pages/MemoraAI/AiQnAPage'
-import AiVisualizationPage from '../pages/MemoraAI/AiVisualizationPage'
 import AiQuestionPage from '../pages/MemoraAI/AiQuestionPage'
+import AiVisualizationPage from '../pages/MemoraAI/AiVisualizationPage'
 import NotFound from '../pages/NotFound/NotFound'
 
-const Router = () => {
-  return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/kb/:id" element={<KnowledgeBaseDetail />} />
-      <Route path="/kb/:kbId/doc/:id" element={<DocumentEdit />} />
-      <Route path="/kb/:kbId/doc/new" element={<DocumentEdit />} />
-      <Route path="/memora-ai" element={<MemoraAIHome />} />
-      <Route path="/memora-ai/qna" element={<AiQnAPage />} />
-      <Route path="/memora-ai/visualization" element={<AiVisualizationPage />} />
-      <Route path="/memora-ai/questions" element={<AiQuestionPage />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  )
-}
+// 资源库页面
+import ResourceHome from '../pages/Resource/ResourceHome'
+import ResourceEdit from '../pages/Resource/ResourceEdit'
+import ResourceDetailPage from '../pages/Resource/ResourceDetailPage'
 
-export default Router
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        element: <Home />,
+      },
+      {
+        path: 'document/edit/:id',
+        element: <DocumentEdit />,
+      },
+      {
+        path: 'knowledge-base/:id',
+        element: <KnowledgeBaseDetail />,
+      },
+      {
+        path: 'memora-ai',
+        element: <MemoraAIHome />,
+      },
+      {
+        path: 'memora-ai/qna',
+        element: <AiQnAPage />,
+      },
+      {
+        path: 'memora-ai/question',
+        element: <AiQuestionPage />,
+      },
+      {
+        path: 'memora-ai/visualization',
+        element: <AiVisualizationPage />,
+      },
+      // 资源库路由
+      {
+        path: 'resource',
+        element: <ResourceHome />,
+      },
+      {
+        path: 'resource/new',
+        element: <ResourceEdit />,
+      },
+      {
+        path: 'resource/edit/:id',
+        element: <ResourceEdit />,
+      },
+      {
+        path: 'resource/:id',
+        element: <ResourceDetailPage />,
+      },
+      {
+        path: '*',
+        element: <NotFound />,
+      },
+    ],
+  },
+])
 
+export default router
