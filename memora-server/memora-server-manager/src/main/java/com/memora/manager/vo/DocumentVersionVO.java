@@ -16,6 +16,14 @@ public class DocumentVersionVO {
     private Integer version;
     
     private String title;
+
+    private String format;
+
+    private String content;
+
+    private String contentText;
+
+    private String sourceType;
     
     private String remark;
     

@@ -3,6 +3,7 @@ package com.memora.config;
 import com.memora.common.exception.BusinessException;
 import com.memora.common.result.Result;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -35,6 +36,16 @@ public class GlobalExceptionHandler {
             .orElse("参数校验失败");
         return Result.error(400, message);
     }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Result<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        log.error("请求体参数校验异常: {}", e.getMessage());
+        String message = e.getBindingResult().getFieldErrors().stream()
+            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .reduce((a, b) -> a + "; " + b)
+            .orElse("参数校验失败");
+        return Result.error(400, message);
+    }
     
     /**
      * 处理其他异常
@@ -45,4 +56,3 @@ public class GlobalExceptionHandler {
         return Result.error(500, "系统异常: " + e.getMessage());
     }
 }
-

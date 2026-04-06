@@ -1,77 +1,49 @@
-import React from 'react'
+import { Suspense, lazy } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
-import Layout from '../components/Layout/Layout'
-import Home from '../pages/Home/Home'
-import DocumentEdit from '../pages/Document/DocumentEdit'
-import KnowledgeBaseDetail from '../pages/KnowledgeBase/KnowledgeBaseDetail'
-import MemoraAIHome from '../pages/MemoraAI/MemoraAIHome'
-import AiQnAPage from '../pages/MemoraAI/AiQnAPage'
-import AiQuestionPage from '../pages/MemoraAI/AiQuestionPage'
-import AiVisualizationPage from '../pages/MemoraAI/AiVisualizationPage'
-import NotFound from '../pages/NotFound/NotFound'
 
-// 资源库页面
-import ResourceHome from '../pages/Resource/ResourceHome'
-import ResourceEdit from '../pages/Resource/ResourceEdit'
-import ResourceDetailPage from '../pages/Resource/ResourceDetailPage'
+const RequireAuth = lazy(() => import('../components/Auth/RequireAuth'))
+const Layout = lazy(() => import('../components/Layout/Layout'))
+const LoginPage = lazy(() => import('../pages/Auth/LoginPage'))
+const Home = lazy(() => import('../pages/Home/Home'))
+const DocumentEditorPage = lazy(() => import('../pages/Document/DocumentEditorPage'))
+const KnowledgeBaseDetail = lazy(() => import('../pages/KnowledgeBase/KnowledgeBaseDetail'))
+const NotFound = lazy(() => import('../pages/NotFound/NotFound'))
+
+const renderLazyPage = (Component) => (
+  <Suspense fallback={<div>页面加载中...</div>}>
+    <Component />
+  </Suspense>
+)
 
 const router = createBrowserRouter([
   {
-    path: '/',
-    element: <Layout />,
+    path: '/login',
+    element: renderLazyPage(LoginPage),
+  },
+  {
+    element: renderLazyPage(RequireAuth),
     children: [
       {
-        index: true,
-        element: <Home />,
+        path: '/docs/:documentId/edit',
+        element: renderLazyPage(DocumentEditorPage),
       },
       {
-        path: 'document/edit/:id',
-        element: <DocumentEdit />,
-      },
-      {
-        path: 'kb/:id',
-        element: <KnowledgeBaseDetail />,
-      },
-      {
-        path: 'knowledge-base/:id',
-        element: <KnowledgeBaseDetail />,
-      },
-      {
-        path: 'memora-ai',
-        element: <MemoraAIHome />,
-      },
-      {
-        path: 'memora-ai/qna',
-        element: <AiQnAPage />,
-      },
-      {
-        path: 'memora-ai/question',
-        element: <AiQuestionPage />,
-      },
-      {
-        path: 'memora-ai/visualization',
-        element: <AiVisualizationPage />,
-      },
-      // 资源库路由
-      {
-        path: 'resource',
-        element: <ResourceHome />,
-      },
-      {
-        path: 'resource/new',
-        element: <ResourceEdit />,
-      },
-      {
-        path: 'resource/edit/:id',
-        element: <ResourceEdit />,
-      },
-      {
-        path: 'resource/:id',
-        element: <ResourceDetailPage />,
-      },
-      {
-        path: '*',
-        element: <NotFound />,
+        path: '/',
+        element: renderLazyPage(Layout),
+        children: [
+          {
+            index: true,
+            element: renderLazyPage(Home),
+          },
+          {
+            path: 'kb/:id',
+            element: renderLazyPage(KnowledgeBaseDetail),
+          },
+          {
+            path: '*',
+            element: renderLazyPage(NotFound),
+          },
+        ],
       },
     ],
   },

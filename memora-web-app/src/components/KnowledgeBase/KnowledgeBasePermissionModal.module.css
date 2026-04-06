@@ -1,0 +1,250 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.36);
+  backdrop-filter: blur(8px);
+}
+
+.modal {
+  width: min(760px, 100%);
+  border-radius: 28px;
+  background: #fffdf8;
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.22);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 24px 12px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9a8f85;
+}
+
+.title {
+  margin-top: 8px;
+  font-size: 28px;
+  color: #14213d;
+}
+
+.closeButton {
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.92);
+  color: #6b7280;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 24px 24px;
+}
+
+.summaryBar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 251, 235, 0.88);
+  color: #8d7b68;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.changeBanner {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(23, 50, 77, 0.07);
+  color: #475569;
+  font-size: 13px;
+}
+
+.modeCard {
+  display: grid;
+  gap: 12px;
+}
+
+.modeOption {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(248, 250, 252, 0.92);
+  color: #475569;
+}
+
+.modeOption strong {
+  display: block;
+  color: #14213d;
+}
+
+.modeOption p {
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+.roleGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.roleCard {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(248, 250, 252, 0.92);
+  color: #475569;
+}
+
+.roleCard strong {
+  display: block;
+  color: #14213d;
+}
+
+.roleCard p {
+  margin-top: 8px;
+  line-height: 1.6;
+  font-size: 13px;
+}
+
+.searchField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.searchField input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(248, 250, 252, 0.94);
+  color: #14213d;
+}
+
+.memberList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.memberRow {
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(248, 250, 252, 0.92);
+}
+
+.memberInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.memberInfo strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #14213d;
+}
+
+.memberInfo p {
+  margin-top: 6px;
+  color: #8d7b68;
+  font-size: 13px;
+}
+
+.selfTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(23, 50, 77, 0.08);
+  color: #17324d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.roleSelect {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.92);
+  color: #14213d;
+}
+
+.state,
+.errorMessage {
+  padding: 12px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+}
+
+.state {
+  background: rgba(248, 250, 252, 0.94);
+  color: #7c6f64;
+}
+
+.errorMessage {
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.secondaryButton,
+.primaryButton {
+  padding: 14px 18px;
+  border-radius: 16px;
+  font-weight: 700;
+}
+
+.secondaryButton {
+  background: rgba(248, 250, 252, 0.95);
+  color: #4b5563;
+}
+
+.primaryButton {
+  color: #fffdf4;
+  background: linear-gradient(135deg, #17324d, #b45309);
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .roleGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .memberRow {
+    grid-template-columns: 1fr;
+  }
+}

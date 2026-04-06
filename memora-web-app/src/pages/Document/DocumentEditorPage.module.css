@@ -1,0 +1,328 @@
+.page {
+  min-height: 100vh;
+  padding: 18px 22px 24px;
+  background:
+    radial-gradient(circle at top left, rgba(191, 219, 254, 0.36), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(253, 230, 138, 0.22), transparent 26%),
+    #f5f3ec;
+  color: #14213d;
+}
+
+.state {
+  padding: 80px 28px;
+  color: #7c6f64;
+}
+
+.stateCard {
+  max-width: 760px;
+  margin: 48px auto 0;
+  padding: 36px;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+}
+
+.stateCard h1 {
+  font-size: 28px;
+  line-height: 1.15;
+}
+
+.stateCard p {
+  margin-top: 14px;
+  color: #6b7280;
+  line-height: 1.8;
+}
+
+.stateActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.05);
+}
+
+.topbarMain {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.backButton,
+.primaryButton,
+.secondaryButton,
+.ghostButton {
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+.backButton,
+.secondaryButton,
+.ghostButton {
+  background: rgba(23, 50, 77, 0.08);
+  color: #17324d;
+}
+
+.primaryButton {
+  color: #fffdf4;
+  background: linear-gradient(135deg, #17324d, #b45309);
+  box-shadow: 0 10px 24px rgba(180, 83, 9, 0.18);
+}
+
+.documentIdentity {
+  min-width: 0;
+}
+
+.title {
+  font-size: clamp(24px, 2.6vw, 32px);
+  line-height: 1.08;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.metaPill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(23, 50, 77, 0.06);
+  color: #7c6f64;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.topbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.feedback {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  font-weight: 600;
+}
+
+.feedbackSuccess {
+  background: rgba(5, 150, 105, 0.12);
+  color: #047857;
+}
+
+.feedbackError {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  margin-top: 18px;
+  align-items: start;
+}
+
+.workspaceWithDrawer {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+}
+
+.editorPanel,
+.versionDrawer {
+  min-width: 0;
+}
+
+.editorLoading {
+  min-height: calc(100vh - 180px);
+  padding: 28px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+}
+
+.versionDrawer {
+  position: sticky;
+  top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: calc(100vh - 36px);
+  padding: 18px;
+  overflow: auto;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+}
+
+.versionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.versionHeader h2 {
+  font-size: 20px;
+}
+
+.versionHeader span {
+  display: block;
+  margin-top: 6px;
+  color: #8d7b68;
+  font-size: 12px;
+}
+
+.versionList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.versionItem,
+.diffPanel,
+.emptyVersion {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(248, 250, 252, 0.92);
+}
+
+.versionTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.versionActions {
+  display: flex;
+  gap: 8px;
+}
+
+.versionTime {
+  display: inline-block;
+  margin-left: 10px;
+  color: #8d7b68;
+  font-size: 12px;
+}
+
+.versionRemark {
+  margin-top: 10px;
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+.versionPreview {
+  margin-top: 12px;
+  color: #334155;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.diffTable {
+  margin-top: 14px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.diffHeader,
+.diffRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.diffHeader {
+  background: rgba(255, 255, 255, 0.82);
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.diffHeader span,
+.diffCell {
+  padding: 12px 14px;
+}
+
+.diffRow + .diffRow {
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.diffCell {
+  min-height: 48px;
+  white-space: pre-wrap;
+  line-height: 1.7;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.diffsame {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.diffadded {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.diffremoved {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.emptyLine {
+  color: #94a3b8;
+}
+
+@media (max-width: 1180px) {
+  .workspace,
+  .workspaceWithDrawer {
+    grid-template-columns: 1fr;
+  }
+
+  .versionDrawer {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .page {
+    padding: 14px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .topbarMain,
+  .topbarActions {
+    width: 100%;
+  }
+
+  .topbarMain {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .topbarActions {
+    justify-content: flex-start;
+  }
+
+  .diffHeader,
+  .diffRow {
+    grid-template-columns: 1fr;
+  }
+}

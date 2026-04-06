@@ -9,9 +9,14 @@ import lombok.Data;
  */
 @Data
 public class KnowledgeBaseCreateDTO {
+    private Long tenantId;
+
     @NotBlank(message = "知识库名称不能为空")
     @Size(max = 100, message = "知识库名称长度不能超过100个字符")
     private String name;
+
+    @Size(max = 120, message = "知识库标识长度不能超过120个字符")
+    private String slug;
     
     @Size(max = 500, message = "描述长度不能超过500个字符")
     private String description;
@@ -19,5 +24,13 @@ public class KnowledgeBaseCreateDTO {
     private String cover;
     
     private Long userId; // 临时字段，后续从鉴权中获取
-}
 
+    private String sourceType;
+
+    private Integer syncEnabled;
+
+    @Size(max = 500, message = "本地路径长度不能超过500个字符")
+    private String localRootPath;
+
+    private Integer isPublic;
+}

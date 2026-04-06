@@ -29,6 +29,8 @@ public class DocumentVersion {
      * 文档标题
      */
     private String title;
+
+    private String format;
     
     /**
      * 文档内容
@@ -39,6 +41,8 @@ public class DocumentVersion {
      * 纯文本内容
      */
     private String contentText;
+
+    private String sourceType;
     
     /**
      * 创建人ID

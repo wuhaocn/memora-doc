@@ -1,8 +1,9 @@
 import axios from 'axios'
+import { getCurrentUser } from '../../utils/user'
 
 // 创建axios实例
 const httpClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -12,11 +13,10 @@ const httpClient = axios.create({
 // 请求拦截器
 httpClient.interceptors.request.use(
   (config) => {
-    // TODO: 后续添加Token认证
-    // const token = localStorage.getItem('token')
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`
-    // }
+    const currentUser = getCurrentUser()
+    if (currentUser?.accessToken) {
+      config.headers.Authorization = `Bearer ${currentUser.accessToken}`
+    }
     return config
   },
   (error) => {
@@ -51,4 +51,3 @@ httpClient.interceptors.response.use(
 )
 
 export default httpClient
-

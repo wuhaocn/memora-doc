@@ -1,90 +1,67 @@
 import httpClient from '../http/axios'
 
-// 知识库API服务
 export const knowledgeBaseApi = {
-  // 获取知识库列表
   getKnowledgeBases: async (params = {}) => {
-    const { page = 1, size = 20, keyword, userId } = params
-    const response = await httpClient.get('/api/v1/knowledge-bases', {
-      params: { page, size, keyword, userId },
+    const { page = 1, size = 20, keyword, tenantId, userId } = params
+    return httpClient.get('/api/v1/knowledge-bases', {
+      params: { page, size, keyword, tenantId, userId },
     })
-    return response
   },
 
-  // 获取用户的知识库列表（不分页）
+  getKnowledgeBasesByTenantId: async (tenantId) => {
+    return httpClient.get(`/api/v1/knowledge-bases/tenant/${tenantId}`)
+  },
+
   getKnowledgeBasesByUserId: async (userId) => {
-    const response = await httpClient.get(`/api/v1/knowledge-bases/user/${userId}`)
-    return response
+    return httpClient.get(`/api/v1/knowledge-bases/user/${userId}`)
   },
 
-  // 获取知识库详情
   getKnowledgeBaseById: async (id) => {
-    const response = await httpClient.get(`/api/v1/knowledge-bases/${id}`)
-    return response
+    return httpClient.get(`/api/v1/knowledge-bases/${id}`)
   },
 
-  // 创建知识库
+  getKnowledgeBaseMembers: async (id) => {
+    return httpClient.get(`/api/v1/knowledge-bases/${id}/members`)
+  },
+
+  updateKnowledgeBaseMembers: async (id, members = []) => {
+    return httpClient.put(`/api/v1/knowledge-bases/${id}/members`, { members })
+  },
+
   createKnowledgeBase: async (data) => {
-    // TODO: 后续从鉴权中获取userId，暂时使用固定值
-    const requestData = {
-      ...data,
-      userId: data.userId || 1,
-    }
-    const response = await httpClient.post('/api/v1/knowledge-bases', requestData)
-    return response
+    return httpClient.post('/api/v1/knowledge-bases', data)
   },
 
-  // 更新知识库
   updateKnowledgeBase: async (id, data) => {
-    const response = await httpClient.put(`/api/v1/knowledge-bases/${id}`, data)
-    return response
+    return httpClient.put(`/api/v1/knowledge-bases/${id}`, data)
   },
 
-  // 删除知识库
   deleteKnowledgeBase: async (id) => {
-    const response = await httpClient.delete(`/api/v1/knowledge-bases/${id}`)
-    return response
+    return httpClient.delete(`/api/v1/knowledge-bases/${id}`)
   },
 
-  // 获取知识库下的文档列表
   getDocumentsByKnowledgeBaseId: async (id, params = {}) => {
     const { parentId, page, size, keyword } = params
-    const response = await httpClient.get(`/api/v1/knowledge-bases/${id}/documents`, {
+    return httpClient.get(`/api/v1/knowledge-bases/${id}/documents`, {
       params: { parentId, page, size, keyword },
     })
-    return response
   },
 
-  // 获取知识库统计信息
-  getStats: async (userId) => {
-    const response = await httpClient.get('/api/v1/knowledge-bases/stats', {
-      params: { userId },
-    })
-    return response
+  getDocumentTree: async (id) => {
+    return httpClient.get(`/api/v1/knowledge-bases/${id}/document-tree`)
   },
 
-  // 生成知识库分享链接
-  generateShareLink: async (id, expireDays = 7) => {
-    const response = await httpClient.post(`/api/v1/knowledge-bases/${id}/share`, null, {
-      params: { expireDays },
-    })
-    return response
+  getSyncJobs: async (id) => {
+    return httpClient.get(`/api/v1/knowledge-bases/${id}/sync-jobs`)
   },
 
-  // 根据分享token获取知识库
-  getByShareToken: async (token) => {
-    const response = await httpClient.get('/api/v1/knowledge-bases/shared', {
-      params: { token },
-    })
-    return response
+  triggerSync: async (id) => {
+    return httpClient.post(`/api/v1/knowledge-bases/${id}/sync-jobs/trigger`)
   },
 
-  // 设置知识库公开状态
-  setPublicStatus: async (id, isPublic) => {
-    const response = await httpClient.put(`/api/v1/knowledge-bases/${id}/public-status`, null, {
-      params: { isPublic },
+  getStats: async (tenantId, userId) => {
+    return httpClient.get('/api/v1/knowledge-bases/stats', {
+      params: { tenantId, userId },
     })
-    return response
   },
 }
-

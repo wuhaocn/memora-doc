@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.memora.common.exception.BusinessException;
 import com.memora.common.result.Result;
+import com.memora.manager.dto.DocumentBatchDeleteDTO;
+import com.memora.manager.dto.DocumentBatchMoveDTO;
 import com.memora.manager.dto.DocumentCreateDTO;
 import com.memora.manager.dto.DocumentSortDTO;
 import com.memora.manager.dto.DocumentUpdateDTO;
@@ -17,6 +19,9 @@ import com.memora.manager.entity.KnowledgeBase;
 import com.memora.manager.mapper.DocumentMapper;
 import com.memora.manager.mapper.DocumentVersionMapper;
 import com.memora.manager.mapper.KnowledgeBaseMapper;
+import com.memora.manager.support.CurrentAccessContext;
+import com.memora.manager.support.SlugUtils;
+import com.memora.manager.support.TenantAccessService;
 import com.memora.manager.vo.DocumentVO;
 import com.memora.manager.vo.DocumentVersionVO;
 import lombok.RequiredArgsConstructor;
@@ -24,72 +29,90 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * 文档服务
- */
 @Service
 @RequiredArgsConstructor
 public class DocumentService extends ServiceImpl<DocumentMapper, Document> {
-    
     private final DocumentMapper documentMapper;
     private final KnowledgeBaseMapper knowledgeBaseMapper;
     private final DocumentVersionMapper documentVersionMapper;
-    
-    /**
-     * 创建文档
-     */
+    private final CurrentAccessContext currentAccessContext;
+    private final TenantAccessService tenantAccessService;
+
     @Transactional(rollbackFor = Exception.class)
     public DocumentVO create(DocumentCreateDTO dto) {
-        // 验证知识库是否存在
-        KnowledgeBase knowledgeBase = knowledgeBaseMapper.selectById(dto.getKnowledgeBaseId());
-        if (knowledgeBase == null || knowledgeBase.getStatus() == 0) {
-            throw new BusinessException(404, "知识库不存在");
-        }
-        
+        KnowledgeBase knowledgeBase = getActiveKnowledgeBase(dto.getKnowledgeBaseId());
+        tenantAccessService.requireKnowledgeBaseWriteAccess(knowledgeBase);
+        Document parent = resolveParent(dto.getParentId(), knowledgeBase.getId());
+
         Document document = new Document();
         BeanUtils.copyProperties(dto, document);
+        document.setTenantId(knowledgeBase.getTenantId());
+        document.setUserId(dto.getUserId() == null ? currentAccessContext.getCurrentUserId() : dto.getUserId());
+        document.setDocType(StringUtils.hasText(dto.getDocType()) ? dto.getDocType() : "DOC");
+        document.setFormat(StringUtils.hasText(dto.getFormat()) ? dto.getFormat() : "MARKDOWN");
+        document.setSlug(resolveDocumentSlug(dto.getTitle(), dto.getSlug()));
+        document.setParentId(parent == null ? 0L : parent.getId());
+        document.setPath(buildPath(parent, document.getSlug()));
+        document.setDepth(parent == null ? 0 : parent.getDepth() + 1);
+        document.setSourceType(StringUtils.hasText(dto.getSourceType()) ? dto.getSourceType() : "MANUAL");
+        document.setSyncStatus("LOCAL_SYNC".equals(document.getSourceType()) ? "PENDING" : "MANUAL");
+        document.setVersionNo(1);
+        document.setSummary(resolveSummary(dto.getSummary(), dto.getContentText(), dto.getContent()));
         document.setStatus(1);
-        document.setIsPublic(0);
+        document.setIsPublic(dto.getIsPublic() == null ? 0 : dto.getIsPublic());
         document.setViewCount(0);
-        document.setSortOrder(0);
-        if (document.getParentId() == null) {
-            document.setParentId(0L);
-        }
+        document.setSortOrder(dto.getSortOrder() == null
+            ? resolveNextSortOrder(knowledgeBase.getId(), parent == null ? 0L : parent.getId(), null)
+            : dto.getSortOrder());
         document.setCreatedAt(LocalDateTime.now());
         document.setUpdatedAt(LocalDateTime.now());
-        
+        document.setPublishedAt(LocalDateTime.now());
+
         this.save(document);
-        
-        // 更新知识库文档数量
-        knowledgeBaseMapper.incrementDocumentCount(dto.getKnowledgeBaseId());
-        
+        refreshKnowledgeBaseDocumentCount(knowledgeBase.getId());
         return convertToVO(document);
     }
-    
-    /**
-     * 更新文档
-     */
+
     @Transactional(rollbackFor = Exception.class)
     public DocumentVO update(Long id, DocumentUpdateDTO dto) {
-        Document document = super.getById(id);
-        if (document == null) {
-            throw new BusinessException(404, "文档不存在");
-        }
-        if (document.getStatus() == 0) {
-            throw new BusinessException(400, "文档已删除");
-        }
-        
-        // 创建文档版本
-        createDocumentVersion(document, "自动保存版本");
-        
+        Document document = getActiveDocument(id);
+        KnowledgeBase knowledgeBase = getActiveKnowledgeBase(document.getKnowledgeBaseId());
+        tenantAccessService.requireKnowledgeBaseWriteAccess(knowledgeBase);
+        createDocumentVersion(document, "自动版本快照");
+
+        Document parent = dto.getParentId() == null ? resolveParent(document.getParentId(), document.getKnowledgeBaseId()) : resolveParent(dto.getParentId(), document.getKnowledgeBaseId());
+        validateParentChange(document, parent);
+        validateDocTypeChange(document, dto.getDocType());
+        String oldPath = document.getPath();
+        Long currentParentId = document.getParentId() == null ? 0L : document.getParentId();
+        Long nextParentId = parent == null ? 0L : parent.getId();
+
         if (StringUtils.hasText(dto.getTitle())) {
             document.setTitle(dto.getTitle());
+            if (!StringUtils.hasText(dto.getSlug())) {
+                document.setSlug(resolveDocumentSlug(dto.getTitle(), null));
+            }
+        }
+        if (StringUtils.hasText(dto.getSlug())) {
+            document.setSlug(resolveDocumentSlug(document.getTitle(), dto.getSlug()));
+        }
+        if (dto.getDocType() != null) {
+            document.setDocType(dto.getDocType());
+        }
+        if (dto.getFormat() != null) {
+            document.setFormat(dto.getFormat());
         }
         if (dto.getContent() != null) {
             document.setContent(dto.getContent());
@@ -97,206 +120,235 @@ public class DocumentService extends ServiceImpl<DocumentMapper, Document> {
         if (dto.getContentText() != null) {
             document.setContentText(dto.getContentText());
         }
+        if (dto.getSummary() != null) {
+            document.setSummary(dto.getSummary());
+        } else {
+            document.setSummary(resolveSummary(document.getSummary(), document.getContentText(), document.getContent()));
+        }
+        if (dto.getParentId() != null) {
+            document.setParentId(nextParentId);
+        }
+        if (dto.getSourceType() != null) {
+            document.setSourceType(dto.getSourceType());
+            document.setSyncStatus("LOCAL_SYNC".equals(dto.getSourceType()) ? "PENDING" : "MANUAL");
+        }
+        if (dto.getSourcePath() != null) {
+            document.setSourcePath(dto.getSourcePath());
+        }
+        if (dto.getIsPublic() != null) {
+            document.setIsPublic(dto.getIsPublic());
+        }
+        if (dto.getSortOrder() != null) {
+            document.setSortOrder(dto.getSortOrder());
+        } else if (dto.getParentId() != null && !nextParentId.equals(currentParentId)) {
+            document.setSortOrder(resolveNextSortOrder(document.getKnowledgeBaseId(), nextParentId, document.getId()));
+        }
+
+        document.setPath(buildPath(parent, document.getSlug()));
+        document.setDepth(parent == null ? 0 : parent.getDepth() + 1);
+        document.setVersionNo((document.getVersionNo() == null ? 1 : document.getVersionNo()) + 1);
         document.setUpdatedAt(LocalDateTime.now());
-        
+
         this.updateById(document);
-        
+        if (!oldPath.equals(document.getPath())) {
+            refreshDescendantPaths(document, oldPath);
+        }
+        refreshKnowledgeBaseDocumentCount(document.getKnowledgeBaseId());
         return convertToVO(document);
     }
-    
-    /**
-     * 创建文档版本
-     */
+
     @Transactional(rollbackFor = Exception.class)
     public void createDocumentVersion(Document document, String remark) {
         Integer latestVersion = documentVersionMapper.getLatestVersion(document.getId());
-        Integer newVersion = latestVersion == null ? 1 : latestVersion + 1;
-        
         DocumentVersion version = new DocumentVersion();
         version.setDocumentId(document.getId());
-        version.setVersion(newVersion);
+        version.setVersion(latestVersion == null ? 1 : latestVersion + 1);
         version.setTitle(document.getTitle());
+        version.setFormat(document.getFormat());
         version.setContent(document.getContent());
         version.setContentText(document.getContentText());
+        version.setSourceType(document.getSourceType());
         version.setUserId(document.getUserId());
         version.setRemark(remark);
         version.setCreatedAt(LocalDateTime.now());
-        
         documentVersionMapper.insert(version);
     }
-    
-    /**
-     * 获取文档版本列表
-     */
+
     public List<DocumentVersionVO> getVersions(Long documentId) {
+        Document document = getActiveDocument(documentId);
+        KnowledgeBase knowledgeBase = getActiveKnowledgeBase(document.getKnowledgeBaseId());
+        tenantAccessService.requireKnowledgeBaseReadAccess(knowledgeBase);
         LambdaQueryWrapper<DocumentVersion> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DocumentVersion::getDocumentId, documentId)
-            .orderByDesc(DocumentVersion::getVersion);
-        
-        List<DocumentVersion> versions = documentVersionMapper.selectList(queryWrapper);
-        return versions.stream()
+        queryWrapper.eq(DocumentVersion::getDocumentId, documentId).orderByDesc(DocumentVersion::getVersion);
+        return documentVersionMapper.selectList(queryWrapper).stream()
             .map(this::convertToVersionVO)
             .collect(Collectors.toList());
     }
-    
-    /**
-     * 获取版本详情
-     */
+
     public DocumentVersion getVersionById(Long versionId) {
-        return documentVersionMapper.selectById(versionId);
+        DocumentVersion version = documentVersionMapper.selectById(versionId);
+        if (version == null) {
+            return null;
+        }
+        Document document = getActiveDocument(version.getDocumentId());
+        KnowledgeBase knowledgeBase = getActiveKnowledgeBase(document.getKnowledgeBaseId());
+        tenantAccessService.requireKnowledgeBaseReadAccess(knowledgeBase);
+        return version;
     }
-    
-    /**
-     * 回滚到指定版本
-     */
+
     @Transactional(rollbackFor = Exception.class)
     public DocumentVO rollbackToVersion(Long documentId, Long versionId) {
-        Document document = super.getById(documentId);
-        if (document == null || document.getStatus() == 0) {
-            throw new BusinessException(404, "文档不存在");
-        }
-        
+        Document document = getActiveDocument(documentId);
+        KnowledgeBase knowledgeBase = getActiveKnowledgeBase(document.getKnowledgeBaseId());
+        tenantAccessService.requireKnowledgeBaseWriteAccess(knowledgeBase);
         DocumentVersion version = documentVersionMapper.selectById(versionId);
         if (version == null || !version.getDocumentId().equals(documentId)) {
             throw new BusinessException(404, "版本不存在");
         }
-        
-        // 创建当前版本的快照
-        createDocumentVersion(document, "回滚前版本");
-        
-        // 回滚到指定版本
+
+        createDocumentVersion(document, "回滚前快照");
         document.setTitle(version.getTitle());
+        document.setFormat(version.getFormat());
         document.setContent(version.getContent());
         document.setContentText(version.getContentText());
+        document.setSourceType(version.getSourceType());
+        document.setSummary(resolveSummary(document.getSummary(), version.getContentText(), version.getContent()));
+        document.setVersionNo((document.getVersionNo() == null ? 1 : document.getVersionNo()) + 1);
         document.setUpdatedAt(LocalDateTime.now());
-        
         this.updateById(document);
-        
         return convertToVO(document);
     }
-    
-    /**
-     * 删除文档（软删除）
-     */
+
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long id) {
-        Document document = super.getById(id);
-        if (document == null) {
-            throw new BusinessException(404, "文档不存在");
+        Document document = getActiveDocument(id);
+        KnowledgeBase knowledgeBase = getActiveKnowledgeBase(document.getKnowledgeBaseId());
+        tenantAccessService.requireKnowledgeBaseWriteAccess(knowledgeBase);
+        LambdaQueryWrapper<Document> childrenQuery = new LambdaQueryWrapper<>();
+        childrenQuery.eq(Document::getParentId, id).eq(Document::getStatus, 1);
+        if (this.count(childrenQuery) > 0) {
+            throw new BusinessException(400, "请先删除或移动子文档");
         }
-        
+
         document.setStatus(0);
         document.setUpdatedAt(LocalDateTime.now());
         this.updateById(document);
-        
-        // 更新知识库文档数量
-        knowledgeBaseMapper.decrementDocumentCount(document.getKnowledgeBaseId());
+        refreshKnowledgeBaseDocumentCount(document.getKnowledgeBaseId());
     }
-    
-    /**
-     * 根据ID获取文档
-     */
-    public DocumentVO getById(Long id) {
-        Document document = super.getById(id);
-        if (document == null || document.getStatus() == 0) {
-            throw new BusinessException(404, "文档不存在");
+
+    @Transactional(rollbackFor = Exception.class)
+    public void batchMove(DocumentBatchMoveDTO dto) {
+        List<Document> selectedDocuments = getActiveDocuments(dto.getDocumentIds());
+        Long knowledgeBaseId = validateBatchKnowledgeBase(selectedDocuments);
+        KnowledgeBase knowledgeBase = getActiveKnowledgeBase(knowledgeBaseId);
+        tenantAccessService.requireKnowledgeBaseWriteAccess(knowledgeBase);
+        Document targetParent = resolveParent(dto.getParentId(), knowledgeBaseId);
+        List<Document> topLevelDocuments = filterTopLevelDocuments(selectedDocuments);
+        Long targetParentId = targetParent == null ? 0L : targetParent.getId();
+
+        boolean alreadyInTargetParent = topLevelDocuments.stream()
+            .allMatch(item -> Objects.equals(item.getParentId() == null ? 0L : item.getParentId(), targetParentId));
+        if (alreadyInTargetParent) {
+            throw new BusinessException(400, "所选节点已经位于目标目录");
         }
+
+        for (Document document : topLevelDocuments) {
+            DocumentUpdateDTO updateDTO = new DocumentUpdateDTO();
+            updateDTO.setParentId(targetParentId);
+            update(document.getId(), updateDTO);
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void batchDelete(DocumentBatchDeleteDTO dto) {
+        List<Document> selectedDocuments = getActiveDocuments(dto.getDocumentIds());
+        Long knowledgeBaseId = validateBatchKnowledgeBase(selectedDocuments);
+        KnowledgeBase knowledgeBase = getActiveKnowledgeBase(knowledgeBaseId);
+        tenantAccessService.requireKnowledgeBaseWriteAccess(knowledgeBase);
+        validateBatchDeleteSelection(knowledgeBaseId, selectedDocuments);
+
+        selectedDocuments.stream()
+            .sorted(Comparator.comparing(item -> item.getDepth() == null ? 0 : item.getDepth(), Comparator.reverseOrder()))
+            .forEach(item -> delete(item.getId()));
+    }
+
+    public DocumentVO getById(Long id) {
+        Document document = getActiveDocument(id);
+        KnowledgeBase knowledgeBase = getActiveKnowledgeBase(document.getKnowledgeBaseId());
+        tenantAccessService.requireKnowledgeBaseReadAccess(knowledgeBase);
         return convertToVO(document);
     }
-    
-    /**
-     * 分页查询文档列表
-     */
+
     public IPage<DocumentVO> list(Integer page, Integer size, String keyword, Long knowledgeBaseId, Long parentId, Long userId) {
+        tenantAccessService.requireTenantMember(currentAccessContext.getCurrentTenantId());
         Page<Document> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
-        
         queryWrapper.eq(Document::getStatus, 1);
-        
+        queryWrapper.eq(Document::getTenantId, currentAccessContext.getCurrentTenantId());
         if (knowledgeBaseId != null) {
+            KnowledgeBase knowledgeBase = getActiveKnowledgeBase(knowledgeBaseId);
+            tenantAccessService.requireKnowledgeBaseReadAccess(knowledgeBase);
             queryWrapper.eq(Document::getKnowledgeBaseId, knowledgeBaseId);
         }
-        
         if (parentId != null) {
+            if (parentId != 0) {
+                getActiveDocument(parentId);
+            }
             queryWrapper.eq(Document::getParentId, parentId);
         }
-        
         if (userId != null) {
             queryWrapper.eq(Document::getUserId, userId);
         }
-        
         if (StringUtils.hasText(keyword)) {
-            queryWrapper.and(wrapper -> wrapper
-                .like(Document::getTitle, keyword)
-                .or()
-                .like(Document::getContentText, keyword)
-            );
+            queryWrapper.and(wrapper -> wrapper.like(Document::getTitle, keyword).or().like(Document::getContentText, keyword));
         }
-        
-        queryWrapper.orderByDesc(Document::getCreatedAt);
-        
+        queryWrapper.orderByAsc(Document::getSortOrder).orderByDesc(Document::getUpdatedAt);
+
         IPage<Document> result = this.page(pageParam, queryWrapper);
-        
         IPage<DocumentVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
-        voPage.setRecords(result.getRecords().stream()
-            .map(this::convertToVO)
-            .collect(Collectors.toList()));
-        
+        voPage.setRecords(result.getRecords().stream().map(this::convertToVO).collect(Collectors.toList()));
         return voPage;
     }
-    
-    /**
-     * 高级搜索文档
-     */
+
     public IPage<DocumentVO> advancedSearch(Integer page, Integer size, SearchRequestDTO searchRequest) {
+        tenantAccessService.requireTenantMember(currentAccessContext.getCurrentTenantId());
         Page<Document> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
-        
         queryWrapper.eq(Document::getStatus, 1);
-        
-        // 关键词搜索
+        queryWrapper.eq(Document::getTenantId, currentAccessContext.getCurrentTenantId());
+
         if (StringUtils.hasText(searchRequest.getKeyword())) {
-            queryWrapper.and(wrapper -> wrapper
-                .like(Document::getTitle, searchRequest.getKeyword())
-                .or()
-                .like(Document::getContentText, searchRequest.getKeyword())
-            );
+            queryWrapper.and(wrapper -> wrapper.like(Document::getTitle, searchRequest.getKeyword()).or().like(Document::getContentText, searchRequest.getKeyword()));
         }
-        
-        // 知识库ID
         if (searchRequest.getKnowledgeBaseId() != null) {
+            KnowledgeBase knowledgeBase = getActiveKnowledgeBase(searchRequest.getKnowledgeBaseId());
+            tenantAccessService.requireKnowledgeBaseReadAccess(knowledgeBase);
             queryWrapper.eq(Document::getKnowledgeBaseId, searchRequest.getKnowledgeBaseId());
         }
-        
-        // 父文档ID
         if (searchRequest.getParentId() != null) {
+            if (searchRequest.getParentId() != 0) {
+                getActiveDocument(searchRequest.getParentId());
+            }
             queryWrapper.eq(Document::getParentId, searchRequest.getParentId());
         }
-        
-        // 用户ID
         if (searchRequest.getUserId() != null) {
             queryWrapper.eq(Document::getUserId, searchRequest.getUserId());
         }
-        
-        // 创建时间范围
         if (searchRequest.getStartCreatedAt() != null) {
             queryWrapper.ge(Document::getCreatedAt, searchRequest.getStartCreatedAt());
         }
         if (searchRequest.getEndCreatedAt() != null) {
             queryWrapper.le(Document::getCreatedAt, searchRequest.getEndCreatedAt());
         }
-        
-        // 更新时间范围
         if (searchRequest.getStartUpdatedAt() != null) {
             queryWrapper.ge(Document::getUpdatedAt, searchRequest.getStartUpdatedAt());
         }
         if (searchRequest.getEndUpdatedAt() != null) {
             queryWrapper.le(Document::getUpdatedAt, searchRequest.getEndUpdatedAt());
         }
-        
-        // 排序
+
         if (StringUtils.hasText(searchRequest.getOrderBy())) {
-            if ("asc".equals(searchRequest.getOrderDirection())) {
+            if ("asc".equalsIgnoreCase(searchRequest.getOrderDirection())) {
                 queryWrapper.orderByAsc(getOrderField(searchRequest.getOrderBy()));
             } else {
                 queryWrapper.orderByDesc(getOrderField(searchRequest.getOrderBy()));
@@ -304,90 +356,316 @@ public class DocumentService extends ServiceImpl<DocumentMapper, Document> {
         } else {
             queryWrapper.orderByDesc(Document::getUpdatedAt);
         }
-        
+
         IPage<Document> result = this.page(pageParam, queryWrapper);
-        
         IPage<DocumentVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
-        voPage.setRecords(result.getRecords().stream()
-            .map(this::convertToVO)
-            .collect(Collectors.toList()));
-        
+        voPage.setRecords(result.getRecords().stream().map(this::convertToVO).collect(Collectors.toList()));
         return voPage;
     }
-    
-    /**
-     * 获取排序字段
-     */
-    private SFunction<Document, ?> getOrderField(String orderBy) {
-        switch (orderBy) {
-            case "createdAt":
-                return Document::getCreatedAt;
-            case "updatedAt":
-                return Document::getUpdatedAt;
-            case "title":
-                return Document::getTitle;
-            case "viewCount":
-                return Document::getViewCount;
-            default:
-                return Document::getUpdatedAt;
+
+    public List<DocumentVO> listByKnowledgeBaseId(Long knowledgeBaseId, Long parentId) {
+        KnowledgeBase knowledgeBase = getActiveKnowledgeBase(knowledgeBaseId);
+        tenantAccessService.requireKnowledgeBaseReadAccess(knowledgeBase);
+        LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Document::getKnowledgeBaseId, knowledgeBaseId)
+            .eq(Document::getTenantId, currentAccessContext.getCurrentTenantId())
+            .eq(Document::getStatus, 1);
+        if (parentId != null) {
+            if (parentId != 0) {
+                getActiveDocument(parentId);
+            }
+            queryWrapper.eq(Document::getParentId, parentId);
+        } else {
+            queryWrapper.eq(Document::getParentId, 0L);
+        }
+        queryWrapper.orderByAsc(Document::getSortOrder).orderByAsc(Document::getPath);
+        return this.list(queryWrapper).stream().map(this::convertToVO).collect(Collectors.toList());
+    }
+
+    public List<DocumentVO> listTreeByKnowledgeBaseId(Long knowledgeBaseId) {
+        KnowledgeBase knowledgeBase = getActiveKnowledgeBase(knowledgeBaseId);
+        tenantAccessService.requireKnowledgeBaseReadAccess(knowledgeBase);
+        LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Document::getKnowledgeBaseId, knowledgeBaseId)
+            .eq(Document::getTenantId, currentAccessContext.getCurrentTenantId())
+            .eq(Document::getStatus, 1)
+            .orderByAsc(Document::getParentId)
+            .orderByAsc(Document::getSortOrder)
+            .orderByAsc(Document::getPath);
+        List<Document> documents = this.list(queryWrapper);
+        Map<Long, List<Document>> documentMap = documents.stream()
+            .collect(Collectors.groupingBy(item -> item.getParentId() == null ? 0L : item.getParentId()));
+
+        List<DocumentVO> result = new ArrayList<>();
+        appendTree(result, documentMap, 0L);
+        return result;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Result<Void> updateSortOrder(List<DocumentSortDTO> sortList) {
+        for (DocumentSortDTO sortItem : sortList) {
+            Document document = getActiveDocument(sortItem.getId());
+            KnowledgeBase knowledgeBase = getActiveKnowledgeBase(document.getKnowledgeBaseId());
+            tenantAccessService.requireKnowledgeBaseWriteAccess(knowledgeBase);
+            document.setSortOrder(sortItem.getSortOrder());
+            document.setUpdatedAt(LocalDateTime.now());
+            this.updateById(document);
+        }
+        return Result.success();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public int markLocalSyncDocumentsAsSynced(Long knowledgeBaseId) {
+        LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Document::getKnowledgeBaseId, knowledgeBaseId)
+            .eq(Document::getStatus, 1)
+            .eq(Document::getSourceType, "LOCAL_SYNC");
+
+        List<Document> documents = this.list(queryWrapper);
+        int changedCount = 0;
+        for (Document document : documents) {
+            if (!"SYNCED".equals(document.getSyncStatus())) {
+                changedCount++;
+            }
+            document.setSyncStatus("SYNCED");
+            document.setUpdatedAt(LocalDateTime.now());
+            this.updateById(document);
+        }
+        return changedCount;
+    }
+
+    public long countActiveDocumentsByKnowledgeBaseId(Long knowledgeBaseId) {
+        LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Document::getKnowledgeBaseId, knowledgeBaseId)
+            .eq(Document::getStatus, 1)
+            .eq(Document::getDocType, "DOC");
+        return this.count(queryWrapper);
+    }
+
+    private KnowledgeBase getActiveKnowledgeBase(Long id) {
+        KnowledgeBase knowledgeBase = knowledgeBaseMapper.selectById(id);
+        if (knowledgeBase == null || knowledgeBase.getStatus() == null || knowledgeBase.getStatus() == 0) {
+            throw new BusinessException(404, "知识库不存在");
+        }
+        if (!knowledgeBase.getTenantId().equals(currentAccessContext.getCurrentTenantId())) {
+            throw new BusinessException(403, "无权访问该知识库");
+        }
+        return knowledgeBase;
+    }
+
+    private Document getActiveDocument(Long id) {
+        Document document = super.getById(id);
+        if (document == null || document.getStatus() == null || document.getStatus() == 0) {
+            throw new BusinessException(404, "文档不存在");
+        }
+        if (!document.getTenantId().equals(currentAccessContext.getCurrentTenantId())) {
+            throw new BusinessException(403, "无权访问该文档");
+        }
+        return document;
+    }
+
+    private Document resolveParent(Long parentId, Long knowledgeBaseId) {
+        if (parentId == null || parentId == 0) {
+            return null;
+        }
+        Document parent = getActiveDocument(parentId);
+        if (!parent.getKnowledgeBaseId().equals(knowledgeBaseId)) {
+            throw new BusinessException(400, "父级文档不属于当前知识库");
+        }
+        if (!"FOLDER".equals(parent.getDocType())) {
+            throw new BusinessException(400, "父级节点必须是目录");
+        }
+        return parent;
+    }
+
+    private void validateParentChange(Document document, Document parent) {
+        if (parent == null) {
+            return;
+        }
+        if (document.getId().equals(parent.getId())) {
+            throw new BusinessException(400, "父级节点不能是当前文档");
+        }
+        if ("FOLDER".equals(document.getDocType()) && StringUtils.hasText(parent.getPath())
+            && parent.getPath().startsWith(document.getPath() + "/")) {
+            throw new BusinessException(400, "目录不能移动到自己的子级目录下");
         }
     }
-    
-    /**
-     * 获取知识库下的文档列表（不分页）
-     */
-    public List<DocumentVO> listByKnowledgeBaseId(Long knowledgeBaseId, Long parentId) {
+
+    private List<Document> getActiveDocuments(List<Long> documentIds) {
+        List<Long> normalizedIds = documentIds == null
+            ? Collections.emptyList()
+            : documentIds.stream().filter(Objects::nonNull).distinct().toList();
+        if (normalizedIds.isEmpty()) {
+            throw new BusinessException(400, "文档列表不能为空");
+        }
+
+        List<Document> documents = normalizedIds.stream()
+            .map(this::getActiveDocument)
+            .collect(Collectors.toList());
+        if (documents.size() != normalizedIds.size()) {
+            throw new BusinessException(404, "存在无效文档");
+        }
+        return documents;
+    }
+
+    private Long validateBatchKnowledgeBase(List<Document> documents) {
+        Set<Long> knowledgeBaseIds = documents.stream()
+            .map(Document::getKnowledgeBaseId)
+            .collect(Collectors.toSet());
+        if (knowledgeBaseIds.size() != 1) {
+            throw new BusinessException(400, "批量操作仅支持同一知识库下的节点");
+        }
+        return knowledgeBaseIds.iterator().next();
+    }
+
+    private List<Document> filterTopLevelDocuments(List<Document> documents) {
+        Map<Long, Document> documentMap = documents.stream()
+            .collect(Collectors.toMap(Document::getId, item -> item));
+
+        return documents.stream()
+            .filter(item -> {
+                Long parentId = item.getParentId() == null ? 0L : item.getParentId();
+                while (parentId != 0) {
+                    if (documentMap.containsKey(parentId)) {
+                        return false;
+                    }
+                    Document parent = super.getById(parentId);
+                    parentId = parent == null || parent.getParentId() == null ? 0L : parent.getParentId();
+                }
+                return true;
+            })
+            .sorted(Comparator.comparing(item -> item.getDepth() == null ? 0 : item.getDepth()))
+            .toList();
+    }
+
+    private void validateBatchDeleteSelection(Long knowledgeBaseId, List<Document> selectedDocuments) {
+        Set<Long> selectedIdSet = selectedDocuments.stream()
+            .map(Document::getId)
+            .collect(Collectors.toCollection(HashSet::new));
+
         LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Document::getKnowledgeBaseId, knowledgeBaseId)
             .eq(Document::getStatus, 1);
-        
-        if (parentId != null) {
-            queryWrapper.eq(Document::getParentId, parentId);
-        } else {
-            queryWrapper.eq(Document::getParentId, 0);
+        List<Document> knowledgeBaseDocuments = this.list(queryWrapper);
+
+        for (Document document : selectedDocuments) {
+            if (!"FOLDER".equals(document.getDocType())) {
+                continue;
+            }
+
+            boolean hasUnselectedDescendant = knowledgeBaseDocuments.stream()
+                .anyMatch(candidate -> !candidate.getId().equals(document.getId())
+                    && StringUtils.hasText(candidate.getPath())
+                    && candidate.getPath().startsWith(document.getPath() + "/")
+                    && !selectedIdSet.contains(candidate.getId()));
+            if (hasUnselectedDescendant) {
+                throw new BusinessException(400, "目录“" + document.getTitle() + "”仍有未选中的子节点，不能批量删除");
+            }
         }
-        
-        queryWrapper.orderByAsc(Document::getSortOrder)
-            .orderByDesc(Document::getCreatedAt);
-        
-        List<Document> list = this.list(queryWrapper);
-        return list.stream()
-            .map(this::convertToVO)
-            .collect(Collectors.toList());
     }
-    
-    /**
-     * 转换为VO
-     */
+
+    private void validateDocTypeChange(Document document, String nextDocType) {
+        if (!StringUtils.hasText(nextDocType) || nextDocType.equals(document.getDocType()) || !"DOC".equals(nextDocType)) {
+            return;
+        }
+        LambdaQueryWrapper<Document> childrenQuery = new LambdaQueryWrapper<>();
+        childrenQuery.eq(Document::getParentId, document.getId()).eq(Document::getStatus, 1);
+        if (this.count(childrenQuery) > 0) {
+            throw new BusinessException(400, "目录存在子节点，不能直接改为文档");
+        }
+    }
+
+    private String resolveDocumentSlug(String title, String slug) {
+        return StringUtils.hasText(slug) ? SlugUtils.toSlug(slug) : SlugUtils.toSlug(title);
+    }
+
+    private String buildPath(Document parent, String slug) {
+        return parent == null ? "/" + slug : parent.getPath() + "/" + slug;
+    }
+
+    private String resolveSummary(String summary, String contentText, String content) {
+        if (StringUtils.hasText(summary)) {
+            return summary.length() > 500 ? summary.substring(0, 500) : summary;
+        }
+        String fallback = StringUtils.hasText(contentText) ? contentText : content;
+        if (!StringUtils.hasText(fallback)) {
+            return null;
+        }
+        return fallback.length() > 180 ? fallback.substring(0, 180) : fallback;
+    }
+
+    private void refreshDescendantPaths(Document document, String oldPath) {
+        LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Document::getKnowledgeBaseId, document.getKnowledgeBaseId())
+            .eq(Document::getStatus, 1)
+            .likeRight(Document::getPath, oldPath + "/");
+        List<Document> descendants = this.list(queryWrapper);
+        for (Document descendant : descendants) {
+            String relativePath = descendant.getPath().substring(oldPath.length());
+            descendant.setPath(document.getPath() + relativePath);
+            descendant.setDepth(calculateDepth(descendant.getPath()));
+            descendant.setUpdatedAt(LocalDateTime.now());
+            this.updateById(descendant);
+        }
+    }
+
+    private int resolveNextSortOrder(Long knowledgeBaseId, Long parentId, Long excludeId) {
+        LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Document::getKnowledgeBaseId, knowledgeBaseId)
+            .eq(Document::getStatus, 1)
+            .eq(Document::getParentId, parentId == null ? 0L : parentId);
+        if (excludeId != null) {
+            queryWrapper.ne(Document::getId, excludeId);
+        }
+        List<Document> siblings = this.list(queryWrapper);
+        return siblings.stream()
+            .map(Document::getSortOrder)
+            .filter(sortOrder -> sortOrder != null)
+            .max(Integer::compareTo)
+            .orElse(-1) + 1;
+    }
+
+    private int calculateDepth(String path) {
+        if (!StringUtils.hasText(path) || "/".equals(path)) {
+            return 0;
+        }
+        String normalized = path.startsWith("/") ? path.substring(1) : path;
+        if (!StringUtils.hasText(normalized)) {
+            return 0;
+        }
+        return normalized.split("/").length - 1;
+    }
+
+    private void appendTree(List<DocumentVO> result, Map<Long, List<Document>> documentMap, Long parentId) {
+        List<Document> children = documentMap.getOrDefault(parentId, Collections.emptyList());
+        for (Document child : children) {
+            result.add(convertToVO(child));
+            appendTree(result, documentMap, child.getId());
+        }
+    }
+
+    private void refreshKnowledgeBaseDocumentCount(Long knowledgeBaseId) {
+        knowledgeBaseMapper.updateDocumentCount(knowledgeBaseId, countActiveDocumentsByKnowledgeBaseId(knowledgeBaseId));
+    }
+
+    private SFunction<Document, ?> getOrderField(String orderBy) {
+        return switch (orderBy) {
+            case "createdAt" -> Document::getCreatedAt;
+            case "title" -> Document::getTitle;
+            case "viewCount" -> Document::getViewCount;
+            default -> Document::getUpdatedAt;
+        };
+    }
+
     private DocumentVO convertToVO(Document document) {
         DocumentVO vo = new DocumentVO();
         BeanUtils.copyProperties(document, vo);
         return vo;
     }
-    
-    /**
-     * 转换为版本VO
-     */
+
     private DocumentVersionVO convertToVersionVO(DocumentVersion version) {
         DocumentVersionVO vo = new DocumentVersionVO();
         BeanUtils.copyProperties(version, vo);
         return vo;
     }
-    
-    /**
-     * 更新文档排序
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public Result<Void> updateSortOrder(@RequestBody List<DocumentSortDTO> sortList) {
-        for (DocumentSortDTO sortItem : sortList) {
-            Document document = super.getById(sortItem.getId());
-            if (document != null && document.getStatus() == 1) {
-                document.setSortOrder(sortItem.getSortOrder());
-                document.setUpdatedAt(LocalDateTime.now());
-                this.updateById(document);
-            }
-        }
-        return Result.success();
-    }
 }
-

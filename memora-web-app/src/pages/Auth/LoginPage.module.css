@@ -1,0 +1,113 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background:
+    radial-gradient(circle at top left, rgba(180, 83, 9, 0.16), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(23, 50, 77, 0.18), transparent 42%),
+    linear-gradient(135deg, #f8fafc, #fdf6ec);
+}
+
+.panel {
+  width: min(980px, 100%);
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 28px;
+  padding: 30px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+}
+
+.hero {
+  padding: 14px 8px 14px 6px;
+}
+
+.eyebrow {
+  color: #9a8f85;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.title {
+  margin-top: 16px;
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1.02;
+  color: #14213d;
+}
+
+.description {
+  margin-top: 18px;
+  max-width: 520px;
+  color: #6b7280;
+  line-height: 1.85;
+}
+
+.demoTip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 28px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(23, 50, 77, 0.92), rgba(180, 83, 9, 0.92));
+  color: #fffdf4;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 26px;
+  border-radius: 26px;
+  background: rgba(248, 250, 252, 0.92);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.field input {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  color: #14213d;
+}
+
+.error {
+  padding: 13px 14px;
+  border-radius: 16px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.submitButton {
+  margin-top: 6px;
+  padding: 15px 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #17324d, #b45309);
+  color: #fffdf4;
+  font-weight: 700;
+  box-shadow: 0 18px 38px rgba(180, 83, 9, 0.24);
+}
+
+.submitButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .panel {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,33 +1,49 @@
--- 初始化测试数据
--- 注意：user_id 暂时使用固定值，后续鉴权功能实现后需要调整
-
--- 插入测试知识库
-INSERT INTO knowledge_base (name, description, user_id, status, is_public, document_count, view_count, sort_order) 
-VALUES 
-('产品文档', '产品相关的所有文档和资料', 1, 1, 0, 3, 120, 0),
-('技术文档', '技术开发相关的文档和规范', 1, 1, 0, 2, 256, 1),
-('团队协作', '团队协作和会议记录', 1, 1, 1, 1, 89, 2);
-
--- 插入测试文档 - 产品文档知识库
-INSERT INTO document (title, content, content_text, knowledge_base_id, user_id, parent_id, status, is_public, view_count, sort_order)
+INSERT INTO tenant (id, name, slug, industry, plan_name, owner_user_id, status)
 VALUES
-('产品需求文档', '<h1>产品需求文档</h1><p>这是产品需求文档的内容，包含了详细的产品功能需求说明。</p><h2>核心功能</h2><ul><li>用户管理</li><li>文档编辑</li><li>协作功能</li></ul>', '产品需求文档 这是产品需求文档的内容，包含了详细的产品功能需求说明。核心功能 用户管理 文档编辑 协作功能', 1, 1, 0, 1, 0, 45, 0),
-('用户调研报告', '<h1>用户调研报告</h1><p>用户调研的详细内容，包括用户画像、需求分析等。</p><h2>调研方法</h2><p>采用问卷调查和深度访谈相结合的方式。</p>', '用户调研报告 用户调研的详细内容，包括用户画像、需求分析等。调研方法 采用问卷调查和深度访谈相结合的方式。', 1, 1, 0, 1, 0, 32, 1),
-('产品规划', '<h1>产品规划</h1><p>产品规划相关内容，包括产品路线图和里程碑计划。</p>', '产品规划 产品规划相关内容，包括产品路线图和里程碑计划。', 1, 1, 0, 1, 0, 28, 2);
+(1, '华东制造知识中台', 'east-manufacturing-docs', '工业制造', 'ENTERPRISE', 1, 1);
 
--- 插入测试文档 - 技术文档知识库
-INSERT INTO document (title, content, content_text, knowledge_base_id, user_id, parent_id, status, is_public, view_count, sort_order)
+INSERT INTO tenant_member (tenant_id, user_id, display_name, role, status)
 VALUES
-('API接口文档', '<h1>API接口文档</h1><p>API接口的详细说明，包括请求参数、响应格式等。</p><h2>接口列表</h2><ul><li>GET /api/v1/knowledge-bases</li><li>POST /api/v1/documents</li></ul>', 'API接口文档 API接口的详细说明，包括请求参数、响应格式等。接口列表 GET /api/v1/knowledge-bases POST /api/v1/documents', 2, 1, 0, 1, 0, 156, 0),
-('开发规范', '<h1>开发规范</h1><p>代码规范和开发流程，包括编码标准、Git工作流等。</p>', '开发规范 代码规范和开发流程，包括编码标准、Git工作流等。', 2, 1, 0, 1, 0, 98, 1);
+(1, 1, '王晨', 'OWNER', 1),
+(1, 2, '刘倩', 'EDITOR', 1),
+(1, 3, '陈立', 'REVIEWER', 1),
+(1, 4, '赵敏', 'VIEWER', 1);
 
--- 插入测试文档 - 团队协作知识库
-INSERT INTO document (title, content, content_text, knowledge_base_id, user_id, parent_id, status, is_public, view_count, sort_order)
+INSERT INTO knowledge_base (
+  id, tenant_id, name, slug, description, user_id, status, is_public, source_type,
+  sync_enabled, local_root_path, sync_status, document_count, view_count, sort_order, last_sync_at
+)
 VALUES
-('周会记录', '<h1>周会记录</h1><p>本周会议内容，包括讨论议题和决策事项。</p><h2>议题</h2><ul><li>项目进度回顾</li><li>下周计划</li></ul>', '周会记录 本周会议内容，包括讨论议题和决策事项。议题 项目进度回顾 下周计划', 3, 1, 0, 1, 1, 45, 0);
+(1, 1, '设备交付知识库', 'delivery-playbook', '沉淀交付 SOP、现场排障和验收模板，支持本地项目目录同步。', 1, 1, 0, 'LOCAL_SYNC', 1, '/mnt/projects/delivery-docs', 'SYNCED', 3, 682, 0, CURRENT_TIMESTAMP),
+(2, 1, '售后维保知识库', 'maintenance-manuals', '面向售后团队的维保手册、巡检报告和标准工时说明。', 2, 1, 0, 'HYBRID', 1, '/mnt/projects/maintenance', 'PENDING', 2, 415, 1, CURRENT_TIMESTAMP),
+(3, 1, '合规与培训中心', 'compliance-academy', '汇总质量合规、EHS 培训资料和现场作业指引。', 3, 1, 1, 'MANUAL', 0, NULL, 'DISABLED', 2, 251, 2, NULL);
 
--- 更新知识库的文档数量
-UPDATE knowledge_base SET document_count = 3 WHERE id = 1;
-UPDATE knowledge_base SET document_count = 2 WHERE id = 2;
-UPDATE knowledge_base SET document_count = 1 WHERE id = 3;
+INSERT INTO document (
+  id, tenant_id, title, slug, doc_type, format, content, content_text, summary,
+  knowledge_base_id, user_id, parent_id, path, depth, source_type, source_path,
+  sync_status, version_no, status, is_public, view_count, sort_order, published_at
+)
+VALUES
+(1, 1, '交付总览', 'delivery-overview', 'FOLDER', 'MARKDOWN', '# 交付总览', '交付总览', '交付流程的总入口目录。', 1, 1, 0, '/delivery-overview', 0, 'MANUAL', NULL, 'MANUAL', 1, 1, 0, 120, 0, CURRENT_TIMESTAMP),
+(2, 1, '项目启动清单', 'kickoff-checklist', 'DOC', 'MARKDOWN', '# 项目启动清单\n- 确认客户信息\n- 确认硬件版本', '项目启动清单 确认客户信息 确认硬件版本', '适用于制造项目实施启动阶段的标准清单。', 1, 1, 1, '/delivery-overview/kickoff-checklist', 1, 'LOCAL_SYNC', '/mnt/projects/delivery-docs/01-kickoff.md', 'SYNCED', 3, 1, 0, 214, 0, CURRENT_TIMESTAMP),
+(3, 1, '现场问题升级流程', 'incident-escalation', 'DOC', 'MARKDOWN', '# 现场问题升级流程\n1. 一级响应\n2. 二级专家介入', '现场问题升级流程 一级响应 二级专家介入', '定义现场异常升级路径和责任边界。', 1, 2, 1, '/delivery-overview/incident-escalation', 1, 'LOCAL_SYNC', '/mnt/projects/delivery-docs/02-escalation.md', 'SYNCED', 4, 1, 0, 163, 1, CURRENT_TIMESTAMP),
+(4, 1, '验收材料模板', 'acceptance-templates', 'DOC', 'RICH_TEXT', '<h1>验收材料模板</h1><p>包含 FAT/SAT 模板与客户签字页。</p>', '验收材料模板 包含 FAT SAT 模板与客户签字页', '交付验收常用模板集合。', 1, 2, 1, '/delivery-overview/acceptance-templates', 1, 'MANUAL', NULL, 'MANUAL', 2, 1, 0, 185, 2, CURRENT_TIMESTAMP),
+(5, 1, '售后维保手册', 'maintenance-root', 'FOLDER', 'MARKDOWN', '# 售后维保手册', '售后维保手册', '售后维保目录。', 2, 2, 0, '/maintenance-root', 0, 'MANUAL', NULL, 'MANUAL', 1, 1, 0, 93, 0, CURRENT_TIMESTAMP),
+(6, 1, '季度巡检报告模板', 'inspection-template', 'DOC', 'MARKDOWN', '# 季度巡检报告模板\n## 巡检项', '季度巡检报告模板 巡检项', '巡检报告模板与填写要求。', 2, 2, 5, '/maintenance-root/inspection-template', 1, 'LOCAL_SYNC', '/mnt/projects/maintenance/q1-template.md', 'PENDING', 2, 1, 0, 141, 0, CURRENT_TIMESTAMP),
+(7, 1, '备件替换工时表', 'parts-labor-table', 'DOC', 'MARKDOWN', '# 备件替换工时表', '备件替换工时表', '标准备件替换工时与审批口径。', 2, 3, 5, '/maintenance-root/parts-labor-table', 1, 'MANUAL', NULL, 'MANUAL', 1, 1, 0, 81, 1, CURRENT_TIMESTAMP),
+(8, 1, '合规培训地图', 'compliance-map', 'DOC', 'MARKDOWN', '# 合规培训地图', '合规培训地图', '覆盖质量、安全和现场作业的培训矩阵。', 3, 3, 0, '/compliance-map', 0, 'MANUAL', NULL, 'MANUAL', 1, 1, 1, 97, 0, CURRENT_TIMESTAMP),
+(9, 1, '高空作业安全指引', 'height-safety-guide', 'DOC', 'MARKDOWN', '# 高空作业安全指引', '高空作业安全指引', '针对高空作业的审批、装备和旁站要求。', 3, 4, 0, '/height-safety-guide', 0, 'MANUAL', NULL, 'MANUAL', 1, 1, 1, 154, 1, CURRENT_TIMESTAMP);
 
+INSERT INTO document_version (document_id, version, title, format, content, content_text, source_type, user_id, remark)
+VALUES
+(2, 1, '项目启动清单', 'MARKDOWN', '# 项目启动清单\n- 确认客户信息', '项目启动清单 确认客户信息', 'LOCAL_SYNC', 1, '首次导入'),
+(2, 2, '项目启动清单', 'MARKDOWN', '# 项目启动清单\n- 确认客户信息\n- 确认硬件版本', '项目启动清单 确认客户信息 确认硬件版本', 'LOCAL_SYNC', 1, '补充硬件核对项'),
+(3, 1, '现场问题升级流程', 'MARKDOWN', '# 现场问题升级流程', '现场问题升级流程', 'LOCAL_SYNC', 2, '标准化升级路径');
+
+INSERT INTO sync_job (
+  tenant_id, knowledge_base_id, job_type, trigger_type, local_path, status,
+  scanned_count, changed_count, message, started_at, finished_at
+)
+VALUES
+(1, 1, 'LOCAL_SCAN', 'SCHEDULED', '/mnt/projects/delivery-docs', 'SUCCESS', 4, 1, '最近一次扫描已完成，目录与线上文档一致。', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(1, 2, 'LOCAL_SCAN', 'MANUAL', '/mnt/projects/maintenance', 'WARNING', 3, 1, '检测到 1 个本地文件待人工确认导入。', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

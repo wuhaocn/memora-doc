@@ -1,73 +1,88 @@
+import { useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { IconMenuFold, IconSearch, IconHome, IconFolder, IconRobot } from '@arco-design/web-react/icon'
-import { Input, Avatar, Dropdown, Menu, Space } from '@arco-design/web-react'
-import { getCurrentUser } from '../../utils/user'
+import { IconMenuFold, IconMenuUnfold, IconHome, IconFolder } from '@arco-design/web-react/icon'
+import { Avatar } from '@arco-design/web-react'
+import { useAuth } from '../../contexts/AuthContext'
+import { useKnowledgeBaseNavigation } from '../../hooks/useKnowledgeBaseNavigation'
+import { getRememberedKnowledgeBaseId } from '../../utils/knowledgeBaseRoute'
 import styles from './Header.module.css'
 
 const Header = ({ onToggleSidebar }) => {
   const location = useLocation()
-  const user = getCurrentUser()
+  const { currentUser, logout } = useAuth()
+  const { knowledgeBases } = useKnowledgeBaseNavigation(currentUser.tenantId, {
+    errorMessage: '加载头部知识库导航失败',
+  })
 
-  const userMenu = (
-    <Menu>
-      <Menu.Item key="profile">个人资料</Menu.Item>
-      <Menu.Item key="settings">设置</Menu.Item>
-      <Menu.Item key="logout">退出登录</Menu.Item>
-    </Menu>
-  )
+  const currentKnowledgeBaseRoute = useMemo(() => {
+    if (location.pathname.startsWith('/kb/')) {
+      return location.pathname
+    }
 
-  const isActive = (path) => {
-    return location.pathname.startsWith(path)
-  }
+    const rememberedKnowledgeBaseId = getRememberedKnowledgeBaseId()
+    const rememberedKnowledgeBase = knowledgeBases.find((item) => item.id === rememberedKnowledgeBaseId)
+    if (rememberedKnowledgeBase) {
+      return `/kb/${rememberedKnowledgeBase.id}`
+    }
+
+    if (knowledgeBases[0]?.id) {
+      return `/kb/${knowledgeBases[0].id}`
+    }
+
+    return '/'
+  }, [knowledgeBases, location.pathname])
+
+  const navItems = [
+    { to: '/', label: '工作台', icon: <IconHome /> },
+    { to: currentKnowledgeBaseRoute, label: '在线文档', icon: <IconFolder /> },
+  ]
 
   return (
     <header className={styles.header}>
       <div className={styles.left}>
-        <button className={styles.menuBtn} onClick={onToggleSidebar}>
-          <IconMenuFold />
+        <button className={styles.menuButton} onClick={onToggleSidebar} type="button" aria-label="切换侧边栏">
+          {location.pathname.startsWith('/kb/') ? <IconMenuFold /> : <IconMenuUnfold />}
         </button>
-        <Link to="/" className={styles.logo}>
-          <span className={styles.logoText}>DocStudio</span>
-        </Link>
-        <div className={styles.nav}>
-          <Space size="large">
-            <Link to="/" className={`${styles.navLink} ${isActive('/') ? styles.active : ''}`}>
-              <Space size="mini">
-                <IconHome />
-                <span>首页</span>
-              </Space>
-            </Link>
-            <Link to="/resource" className={`${styles.navLink} ${isActive('/resource') ? styles.active : ''}`}>
-              <Space size="mini">
-                <IconFolder />
-                <span>资源库</span>
-              </Space>
-            </Link>
-            <Link to="/memora-ai" className={`${styles.navLink} ${isActive('/memora-ai') ? styles.active : ''}`}>
-              <Space size="mini">
-                <IconRobot />
-                <span>Memora AI</span>
-              </Space>
-            </Link>
-          </Space>
-        </div>
-      </div>
-      <div className={styles.center}>
-        <Input
-          prefix={<IconSearch />}
-          placeholder="搜索知识库和文档..."
-          className={styles.search}
-        />
-      </div>
-      <div className={styles.right}>
-        <Dropdown trigger="click" droplist={userMenu}>
-          <div className={styles.userInfo}>
-            <Avatar size={32} className={styles.avatar}>
-              {user.nickname.charAt(0)}
-            </Avatar>
-            <span className={styles.username}>{user.nickname}</span>
+        <Link to="/" className={styles.brand}>
+          <span className={styles.brandMark}>M</span>
+          <div>
+            <div className={styles.brandName}>Memora Studio</div>
+            <div className={styles.brandMeta}>{currentUser.tenantName}</div>
           </div>
-        </Dropdown>
+        </Link>
+      </div>
+
+      <nav className={styles.nav}>
+        {navItems.map((item) => {
+          const active = item.to === '/' ? location.pathname === '/' : location.pathname.startsWith('/kb/')
+          return (
+            <Link key={item.to} to={item.to} className={`${styles.navLink} ${active ? styles.active : ''}`}>
+              {item.icon}
+              <span>{item.label}</span>
+            </Link>
+          )
+        })}
+      </nav>
+
+      <div className={styles.right}>
+        <div className={styles.workspaceBadge}>
+          <span className={styles.workspaceLabel}>Plan</span>
+          <span className={styles.workspaceValue}>{currentUser.planName || 'Enterprise'}</span>
+        </div>
+        <div className={styles.userCard}>
+          <Avatar size={34} className={styles.avatar}>
+            {currentUser.nickname.charAt(0)}
+          </Avatar>
+          <div>
+            <div className={styles.userName}>{currentUser.nickname}</div>
+            <div className={styles.userMeta}>
+              {currentUser.username} / {currentUser.role}
+            </div>
+          </div>
+        </div>
+        <button type="button" className={styles.logoutButton} onClick={logout}>
+          退出
+        </button>
       </div>
     </header>
   )

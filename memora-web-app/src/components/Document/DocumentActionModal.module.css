@@ -1,0 +1,137 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.36);
+  backdrop-filter: blur(8px);
+}
+
+.modal {
+  width: min(640px, 100%);
+  border-radius: 28px;
+  background: #fffdf8;
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.22);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 24px 12px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9a8f85;
+}
+
+.title {
+  margin-top: 8px;
+  font-size: 28px;
+  color: #14213d;
+}
+
+.closeButton {
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.92);
+  color: #6b7280;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 24px 24px;
+}
+
+.typeTag {
+  align-self: flex-start;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(23, 50, 77, 0.08);
+  color: #17324d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quickHint {
+  color: #8d7b68;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.advancedToggle {
+  align-self: flex-start;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(23, 50, 77, 0.08);
+  color: #17324d;
+  font-weight: 700;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(248, 250, 252, 0.94);
+  color: #14213d;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.errorMessage {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.secondaryButton,
+.primaryButton {
+  padding: 14px 18px;
+  border-radius: 16px;
+  font-weight: 700;
+}
+
+.secondaryButton {
+  background: rgba(248, 250, 252, 0.95);
+  color: #4b5563;
+}
+
+.primaryButton {
+  color: #fffdf4;
+  background: linear-gradient(135deg, #17324d, #b45309);
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -23,5 +23,7 @@ public interface KnowledgeBaseMapper extends BaseMapper<KnowledgeBase> {
      */
     @Update("UPDATE knowledge_base SET document_count = document_count - 1 WHERE id = #{id}")
     void decrementDocumentCount(@Param("id") Long id);
-}
 
+    @Update("UPDATE knowledge_base SET document_count = #{documentCount}, updated_at = CURRENT_TIMESTAMP WHERE id = #{id}")
+    void updateDocumentCount(@Param("id") Long id, @Param("documentCount") long documentCount);
+}

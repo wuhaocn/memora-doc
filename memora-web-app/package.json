@@ -1,7 +1,7 @@
 {
-  "name": "doc-web-app",
+  "name": "memora-web-app",
   "version": "1.0.0",
-  "description": "DocStudio - 在线文档管理系统前端",
+  "description": "Memora Web App - 在线文档系统管理台",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,13 +11,8 @@
   },
   "dependencies": {
     "@arco-design/web-react": "^2.62.0",
-    "@excalidraw/excalidraw": "^0.17.6",
     "@tiptap/extension-image": "^2.4.0",
     "@tiptap/extension-placeholder": "^2.4.0",
-    "@tiptap/extension-table": "^2.4.0",
-    "@tiptap/extension-table-cell": "^2.4.0",
-    "@tiptap/extension-table-header": "^2.4.0",
-    "@tiptap/extension-table-row": "^2.4.0",
     "@tiptap/react": "^2.4.0",
     "@tiptap/starter-kit": "^2.4.0",
     "axios": "^1.7.7",

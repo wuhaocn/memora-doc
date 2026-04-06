@@ -10,13 +10,25 @@ import lombok.Data;
  */
 @Data
 public class DocumentCreateDTO {
+    private Long tenantId;
+
     @NotBlank(message = "文档标题不能为空")
     @Size(max = 200, message = "文档标题长度不能超过200个字符")
     private String title;
+
+    @Size(max = 160, message = "文档标识长度不能超过160个字符")
+    private String slug;
+
+    private String docType;
+
+    private String format;
     
     private String content;
     
     private String contentText;
+
+    @Size(max = 500, message = "摘要长度不能超过500个字符")
+    private String summary;
     
     @NotNull(message = "知识库ID不能为空")
     private Long knowledgeBaseId;
@@ -24,5 +36,13 @@ public class DocumentCreateDTO {
     private Long parentId; // 默认为0，表示根目录
     
     private Long userId; // 临时字段，后续从鉴权中获取
-}
 
+    private String sourceType;
+
+    @Size(max = 500, message = "来源路径长度不能超过500个字符")
+    private String sourcePath;
+
+    private Integer isPublic;
+
+    private Integer sortOrder;
+}

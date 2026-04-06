@@ -17,11 +17,7 @@ export default Node.create({
     return {
       diagramType: {
         default: 'mermaid',
-        parseHTML: (element) => {
-          const type = element.getAttribute('data-diagram-type')
-          // 兼容旧的 drawio 类型，转换为 excalidraw
-          return type === 'drawio' ? 'excalidraw' : type
-        },
+        parseHTML: () => 'mermaid',
         renderHTML: (attributes) => {
           if (!attributes.diagramType) {
             return {}
@@ -77,7 +73,7 @@ export default Node.create({
         getAttrs: (element) => {
           if (typeof element === 'string') return false
           return {
-            diagramType: element.getAttribute('data-diagram-type'),
+            diagramType: 'mermaid',
             content: element.getAttribute('data-content'),
             width: element.getAttribute('data-width'),
             height: element.getAttribute('data-height'),
@@ -145,4 +141,3 @@ export default Node.create({
     }
   },
 })
-

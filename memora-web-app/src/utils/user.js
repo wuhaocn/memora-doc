@@ -1,34 +1,81 @@
-// 模拟用户状态管理
+const STORAGE_KEY = 'memora-auth-session'
+export const AUTH_SESSION_CHANGED_EVENT = 'memora:auth-session-changed'
 
-// 当前登录用户信息
-export const currentUser = {
-  id: 1,
-  username: 'testUser',
-  nickname: '测试用户',
-  email: 'test@example.com',
-  avatar: '',
-  status: 1
+const normalizeSessionUser = (session) => {
+  if (!session?.userId || !session?.tenantId || !session?.accessToken) {
+    return null
+  }
+
+  return {
+    id: session.userId,
+    username: session.username || `user-${session.userId}`,
+    nickname: session.displayName || session.username || `用户${session.userId}`,
+    email: session.email || `${session.userId}@memora.local`,
+    avatar: '',
+    status: 1,
+    tenantId: session.tenantId,
+    tenantName: session.tenantName,
+    tenantSlug: session.tenantSlug,
+    industry: session.industry,
+    planName: session.planName,
+    role: session.role,
+    accessToken: session.accessToken,
+  }
 }
 
-// 模拟登录函数
-export const login = (username, password) => {
-  // 模拟登录成功，返回当前用户
-  return Promise.resolve(currentUser)
+const readStoredUser = () => {
+  try {
+    const rawValue = window.localStorage.getItem(STORAGE_KEY)
+    if (!rawValue) {
+      return null
+    }
+
+    const parsed = JSON.parse(rawValue)
+    if (!parsed?.id || !parsed?.accessToken) {
+      return null
+    }
+
+    return parsed
+  } catch (error) {
+    console.error('读取本地会话失败', error)
+    return null
+  }
 }
 
-// 模拟登出函数
-export const logout = () => {
-  // 模拟登出成功
-  return Promise.resolve(true)
+const persistUser = (user) => {
+  if (!user) {
+    return null
+  }
+
+  const nextValue = JSON.stringify(user)
+  const currentValue = window.localStorage.getItem(STORAGE_KEY)
+  if (currentValue === nextValue) {
+    return user
+  }
+
+  window.localStorage.setItem(STORAGE_KEY, nextValue)
+  window.dispatchEvent(new CustomEvent(AUTH_SESSION_CHANGED_EVENT, { detail: user }))
+  return user
 }
 
-// 检查用户是否登录
+export const hydrateCurrentUser = (session) => {
+  const sessionUser = normalizeSessionUser(session)
+  if (!sessionUser) {
+    return null
+  }
+
+  return persistUser(sessionUser)
+}
+
+export const clearCurrentUser = () => {
+  window.localStorage.removeItem(STORAGE_KEY)
+  window.dispatchEvent(new CustomEvent(AUTH_SESSION_CHANGED_EVENT))
+}
+
 export const isLoggedIn = () => {
-  // 模拟用户已登录
-  return true
+  return !!readStoredUser()
 }
 
-// 获取当前登录用户
 export const getCurrentUser = () => {
-  return currentUser
+  return readStoredUser()
 }

@@ -3,155 +3,132 @@ package com.memora.manager.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.memora.common.result.Result;
 import com.memora.manager.dto.KnowledgeBaseCreateDTO;
+import com.memora.manager.dto.KnowledgeBaseMemberBatchUpdateDTO;
 import com.memora.manager.dto.KnowledgeBaseUpdateDTO;
 import com.memora.manager.service.DocumentService;
+import com.memora.manager.service.KnowledgeBaseMemberService;
 import com.memora.manager.service.KnowledgeBaseService;
+import com.memora.manager.service.SyncJobService;
 import com.memora.manager.vo.DocumentVO;
+import com.memora.manager.vo.KnowledgeBaseMemberVO;
 import com.memora.manager.vo.KnowledgeBaseStatsVO;
 import com.memora.manager.vo.KnowledgeBaseVO;
+import com.memora.manager.vo.SyncJobVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-
 import java.util.List;
 
-/**
- * 知识库控制器
- */
 @RestController
 @RequestMapping("/api/v1/knowledge-bases")
 @RequiredArgsConstructor
 public class KnowledgeBaseController {
-    
     private final KnowledgeBaseService knowledgeBaseService;
+    private final KnowledgeBaseMemberService knowledgeBaseMemberService;
     private final DocumentService documentService;
-    
-    /**
-     * 创建知识库
-     */
+    private final SyncJobService syncJobService;
+
     @PostMapping
     public Result<KnowledgeBaseVO> create(@Valid @RequestBody KnowledgeBaseCreateDTO dto) {
-        // TODO: 从鉴权中获取userId，暂时使用DTO中的userId
-        if (dto.getUserId() == null) {
-            dto.setUserId(1L); // 临时默认值
-        }
-        KnowledgeBaseVO result = knowledgeBaseService.create(dto);
-        return Result.success(result);
+        return Result.success(knowledgeBaseService.create(dto));
     }
-    
-    /**
-     * 更新知识库
-     */
+
     @PutMapping("/{id}")
-    public Result<KnowledgeBaseVO> update(@PathVariable Long id, 
-                                          @Valid @RequestBody KnowledgeBaseUpdateDTO dto) {
-        KnowledgeBaseVO result = knowledgeBaseService.update(id, dto);
-        return Result.success(result);
+    public Result<KnowledgeBaseVO> update(@PathVariable Long id, @Valid @RequestBody KnowledgeBaseUpdateDTO dto) {
+        return Result.success(knowledgeBaseService.update(id, dto));
     }
-    
-    /**
-     * 删除知识库
-     */
+
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         knowledgeBaseService.delete(id);
         return Result.success();
     }
-    
-    /**
-     * 获取知识库详情
-     */
+
     @GetMapping("/{id}")
     public Result<KnowledgeBaseVO> getById(@PathVariable Long id) {
-        KnowledgeBaseVO result = knowledgeBaseService.getById(id);
-        return Result.success(result);
+        return Result.success(knowledgeBaseService.getById(id));
     }
-    
-    /**
-     * 分页查询知识库列表
-     */
+
+    @GetMapping("/{id}/members")
+    public Result<List<KnowledgeBaseMemberVO>> listMembers(@PathVariable Long id) {
+        return Result.success(knowledgeBaseMemberService.listMembers(id));
+    }
+
+    @PutMapping("/{id}/members")
+    public Result<List<KnowledgeBaseMemberVO>> replaceMembers(
+        @PathVariable Long id,
+        @Valid @RequestBody KnowledgeBaseMemberBatchUpdateDTO dto) {
+        return Result.success(knowledgeBaseMemberService.replaceMembers(id, dto));
+    }
+
     @GetMapping
     public Result<IPage<KnowledgeBaseVO>> list(
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "20") Integer size,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Long userId) {
-        IPage<KnowledgeBaseVO> result = knowledgeBaseService.list(page, size, keyword, userId);
-        return Result.success(result);
+        @RequestParam(defaultValue = "1") Integer page,
+        @RequestParam(defaultValue = "20") Integer size,
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) Long tenantId,
+        @RequestParam(required = false) Long userId) {
+        return Result.success(knowledgeBaseService.list(page, size, keyword, tenantId, userId));
     }
-    
-    /**
-     * 获取用户的知识库列表（不分页）
-     */
+
+    @GetMapping("/tenant/{tenantId}")
+    public Result<List<KnowledgeBaseVO>> listByTenantId(@PathVariable Long tenantId) {
+        return Result.success(knowledgeBaseService.listByTenantId(tenantId));
+    }
+
     @GetMapping("/user/{userId}")
     public Result<List<KnowledgeBaseVO>> listByUserId(@PathVariable Long userId) {
-        List<KnowledgeBaseVO> result = knowledgeBaseService.listByUserId(userId);
-        return Result.success(result);
+        return Result.success(knowledgeBaseService.listByUserId(userId));
     }
-    
-    /**
-     * 获取知识库下的文档列表
-     */
+
     @GetMapping("/{id}/documents")
     public Result<Object> getDocuments(
-            @PathVariable Long id,
-            @RequestParam(required = false) Long parentId,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) String keyword) {
+        @PathVariable Long id,
+        @RequestParam(required = false) Long parentId,
+        @RequestParam(required = false) Integer page,
+        @RequestParam(required = false) Integer size,
+        @RequestParam(required = false) String keyword) {
         if (page != null && size != null) {
-            // 分页查询
-            IPage<DocumentVO> result = documentService.list(
-                page, size, keyword, id, parentId, null);
-            return Result.success(result);
-        } else {
-            // 不分页查询
-            List<DocumentVO> list = documentService.listByKnowledgeBaseId(id, parentId);
-            return Result.success(list);
+            return Result.success(documentService.list(page, size, keyword, id, parentId, null));
         }
+        return Result.success(documentService.listByKnowledgeBaseId(id, parentId));
     }
-    
-    /**
-     * 获取知识库统计信息
-     */
+
+    @GetMapping("/{id}/document-tree")
+    public Result<List<DocumentVO>> getDocumentTree(@PathVariable Long id) {
+        return Result.success(documentService.listTreeByKnowledgeBaseId(id));
+    }
+
+    @GetMapping("/{id}/sync-jobs")
+    public Result<List<SyncJobVO>> getSyncJobs(@PathVariable Long id) {
+        return Result.success(syncJobService.listByKnowledgeBaseId(id));
+    }
+
+    @PostMapping("/{id}/sync-jobs/trigger")
+    public Result<SyncJobVO> triggerSync(@PathVariable Long id) {
+        return Result.success(syncJobService.triggerKnowledgeBaseSync(id));
+    }
+
     @GetMapping("/stats")
     public Result<KnowledgeBaseStatsVO> getStats(
-            @RequestParam(required = false) Long userId) {
-        KnowledgeBaseStatsVO result = knowledgeBaseService.getStats(userId);
-        return Result.success(result);
+        @RequestParam(required = false) Long tenantId,
+        @RequestParam(required = false) Long userId) {
+        return Result.success(knowledgeBaseService.getStats(tenantId, userId));
     }
-    
-    /**
-     * 生成知识库分享链接
-     */
+
     @PostMapping("/{id}/share")
-    public Result<String> generateShareLink(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "7") Integer expireDays) {
-        String shareLink = knowledgeBaseService.generateShareLink(id, expireDays);
-        return Result.success(shareLink);
+    public Result<String> generateShareLink(@PathVariable Long id, @RequestParam(defaultValue = "7") Integer expireDays) {
+        return Result.success(knowledgeBaseService.generateShareLink(id, expireDays));
     }
-    
-    /**
-     * 根据分享token获取知识库
-     */
+
     @GetMapping("/shared")
-    public Result<KnowledgeBaseVO> getByShareToken(
-            @RequestParam String token) {
-        KnowledgeBaseVO result = knowledgeBaseService.getByShareToken(token);
-        return Result.success(result);
+    public Result<KnowledgeBaseVO> getByShareToken(@RequestParam String token) {
+        return Result.success(knowledgeBaseService.getByShareToken(token));
     }
-    
-    /**
-     * 设置知识库公开状态
-     */
+
     @PutMapping("/{id}/public-status")
-    public Result<KnowledgeBaseVO> setPublicStatus(
-            @PathVariable Long id,
-            @RequestParam Integer isPublic) {
-        KnowledgeBaseVO result = knowledgeBaseService.setPublicStatus(id, isPublic);
-        return Result.success(result);
+    public Result<KnowledgeBaseVO> setPublicStatus(@PathVariable Long id, @RequestParam Integer isPublic) {
+        return Result.success(knowledgeBaseService.setPublicStatus(id, isPublic));
     }
 }
-
