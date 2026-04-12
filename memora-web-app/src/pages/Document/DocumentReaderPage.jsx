@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 import DocumentShareDrawer from '../../components/Document/DocumentShareDrawer'
 import { documentApi } from '../../services/api/documentApi'
@@ -16,10 +16,13 @@ const PAGE_STATUS = {
 const DocumentReaderPage = () => {
   const { documentId } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const [scrolled, setScrolled] = useState(false)
   const [pageStatus, setPageStatus] = useState(PAGE_STATUS.LOADING)
   const [pageErrorMessage, setPageErrorMessage] = useState('')
   const [document, setDocument] = useState(null)
   const [shareOpen, setShareOpen] = useState(false)
+  const isShareMode = searchParams.get('share') === '1'
 
   const loadDocument = useCallback(async () => {
     try {
@@ -60,6 +63,16 @@ const DocumentReaderPage = () => {
   useEffect(() => {
     loadDocument()
   }, [loadDocument])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 24)
+    }
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const backToKnowledgeBase = () => {
     if (!document?.knowledgeBaseId) {
@@ -102,41 +115,56 @@ const DocumentReaderPage = () => {
   const shouldRenderRichPreview = document.docType === 'DOC' && !!document.content
 
   return (
-    <div className={styles.page}>
-      <header className={styles.topbar}>
-        <div className={styles.main}>
-          <button type="button" className={styles.backButton} onClick={backToKnowledgeBase}>
-            返回
-          </button>
-          <div className={styles.documentIdentity}>
-            <h1 className={styles.title}>{document.title}</h1>
-            <div className={styles.meta}>
-              <span className={styles.metaPill}>v{document.versionNo}</span>
-              <span className={styles.metaPill}>{document.format}</span>
-              <span className={styles.metaPill}>更新于 {dayjs(document.updatedAt).format('MM-DD HH:mm')}</span>
-            </div>
-          </div>
-        </div>
-        <div className={styles.topbarActions}>
-          <button type="button" className={styles.secondaryButton} onClick={() => setShareOpen(true)}>
-            分享文档
-          </button>
-          <button type="button" className={styles.primaryButton} onClick={() => navigate(`/docs/${document.id}/edit`)}>
-            继续编辑
-          </button>
-        </div>
+    <div className={`${styles.page} ${scrolled ? styles.pageScrolled : ''}`}>
+      <header className={`${styles.topbar} ${scrolled ? styles.topbarScrolled : ''}`}>
+        <button
+          type="button"
+          className={styles.backButton}
+          onClick={isShareMode ? () => navigate('/') : backToKnowledgeBase}
+        >
+          {isShareMode ? '返回工作台' : '返回知识库'}
+        </button>
+        {isShareMode && <span className="ui-chip ui-chip-accent">分享只读</span>}
       </header>
 
       <main className={styles.content}>
-        {shouldRenderRichPreview ? (
-          <article className={styles.richPreview}>
-            <div className={styles.richPreviewBody} dangerouslySetInnerHTML={{ __html: document.content }} />
-          </article>
-        ) : (
-          <div className={styles.preview}>
-            {document.contentText || document.content || '当前文档暂无正文。'}
+        <section className={styles.readerCard}>
+          <div className={styles.documentHeader}>
+            <div className={styles.documentHeading}>
+              <div className={styles.eyebrow}>{isShareMode ? '分享阅读' : '阅读文档'}</div>
+              <h1 className={styles.title}>{document.title}</h1>
+              <div className={styles.documentSubline}>
+                <span>v{document.versionNo}</span>
+                <span>{dayjs(document.updatedAt).format('MM-DD HH:mm')}</span>
+                {isShareMode ? <span>只读访问</span> : null}
+              </div>
+            </div>
+            <div className={styles.documentToolbar}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setShareOpen(true)}>
+                分享文档
+              </button>
+              {!isShareMode && (
+                <button type="button" className={styles.primaryButton} onClick={() => navigate(`/docs/${document.id}/edit`)}>
+                  继续编辑
+                </button>
+              )}
+            </div>
           </div>
-        )}
+
+          {document.summary ? <p className={styles.documentSummary}>{document.summary}</p> : null}
+
+          <div className={styles.documentStage}>
+            {shouldRenderRichPreview ? (
+              <article className={styles.richPreview}>
+                <div className={styles.richPreviewBody} dangerouslySetInnerHTML={{ __html: document.content }} />
+              </article>
+            ) : (
+              <div className={styles.preview}>
+                {document.contentText || document.content || '当前文档暂无正文。'}
+              </div>
+            )}
+          </div>
+        </section>
       </main>
 
       <DocumentShareDrawer

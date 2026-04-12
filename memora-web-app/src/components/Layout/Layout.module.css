@@ -1,9 +1,10 @@
 .layout {
   min-height: 100vh;
+  padding-top: var(--header-height);
   background:
-    radial-gradient(circle at top left, rgba(191, 219, 254, 0.45), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(253, 230, 138, 0.28), transparent 24%),
-    #f5f3ec;
+    radial-gradient(circle at top left, rgba(51, 112, 255, 0.08), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(51, 112, 255, 0.05), transparent 20%),
+    #f5f7fa;
 }
 
 .shell {
@@ -14,5 +15,4 @@
 .main {
   flex: 1;
   min-width: 0;
-  overflow-y: auto;
 }

@@ -36,8 +36,9 @@ const DocumentBatchMoveModal = ({
       <div className={styles.modal}>
         <div className={styles.header}>
           <div>
-            <p className={styles.eyebrow}>Batch Move</p>
+            <p className={styles.eyebrow}>批量整理</p>
             <h2 className={styles.title}>批量移动节点</h2>
+            <p className={styles.description}>把已选内容移动到新的目录中，继续整理文档结构。</p>
           </div>
           <button type="button" className={styles.closeButton} onClick={onClose}>
             关闭

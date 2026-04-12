@@ -41,7 +41,7 @@ const DocumentActionModal = ({
   }
 
   const typeLabel = docType === 'FOLDER' ? '目录' : '文档'
-  const titleLabel = mode === 'create' ? `新建${typeLabel}` : `编辑${typeLabel}`
+  const titleLabel = mode === 'create' ? `新建${typeLabel}` : `整理${typeLabel}`
   const showAdvancedSettings = mode === 'edit' || advancedOpen
   const createHint = docType === 'FOLDER'
     ? '先输入目录名称，创建后再整理结构。'
@@ -78,8 +78,11 @@ const DocumentActionModal = ({
       <div className={styles.modal}>
         <div className={styles.header}>
           <div>
-            <p className={styles.eyebrow}>{mode === 'create' ? 'Create Tree Node' : 'Update Tree Node'}</p>
+            <p className={styles.eyebrow}>{docType === 'FOLDER' ? '目录结构' : '文档内容'}</p>
             <h2 className={styles.title}>{titleLabel}</h2>
+            <p className={styles.description}>
+              {mode === 'create' ? createHint : '调整标题、目录位置和摘要信息。'}
+            </p>
           </div>
           <button type="button" className={styles.closeButton} onClick={onClose}>
             关闭
@@ -88,10 +91,9 @@ const DocumentActionModal = ({
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.typeTag}>{typeLabel}</div>
-          {mode === 'create' && <p className={styles.quickHint}>{createHint}</p>}
 
           <label className={styles.field}>
-            <span>名称</span>
+            <span>{docType === 'FOLDER' ? '名称' : '标题'}</span>
             <input
               value={form.title}
               onChange={(event) => handleChange('title', event.target.value)}
@@ -149,7 +151,7 @@ const DocumentActionModal = ({
               取消
             </button>
             <button type="submit" className={styles.primaryButton} disabled={submitting}>
-              {submitting ? '提交中...' : mode === 'create' ? `创建${typeLabel}` : '保存变更'}
+              {submitting ? '提交中...' : mode === 'create' ? `新建${typeLabel}` : '保存调整'}
             </button>
           </div>
         </form>

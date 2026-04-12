@@ -116,21 +116,38 @@ const DocumentRichEditor = ({
       onClick: () => editor?.chain().focus().toggleCodeBlock().run(),
     },
   ]
+  const structureTools = tools.slice(0, 3)
+  const formatTools = tools.slice(3)
 
   return (
     <div className={`${styles.editorShell} ${focusMode ? styles.focusMode : ''}`}>
       <div className={styles.toolbar}>
-        <div className={styles.toolGroup}>
-          {tools.map((tool) => (
-            <button
-              key={tool.key}
-              type="button"
-              className={`${styles.toolButton} ${tool.active ? styles.active : ''}`}
-              onClick={tool.onClick}
-            >
-              {tool.label}
-            </button>
-          ))}
+        <div className={styles.toolbarMain}>
+          <div className={styles.toolGroup}>
+            {structureTools.map((tool) => (
+              <button
+                key={tool.key}
+                type="button"
+                className={`${styles.toolButton} ${tool.active ? styles.active : ''}`}
+                onClick={tool.onClick}
+              >
+                {tool.label}
+              </button>
+            ))}
+          </div>
+          <div className={styles.toolDivider} />
+          <div className={styles.toolGroup}>
+            {formatTools.map((tool) => (
+              <button
+                key={tool.key}
+                type="button"
+                className={`${styles.toolButton} ${tool.active ? styles.active : ''}`}
+                onClick={tool.onClick}
+              >
+                {tool.label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className={styles.toolGroup}>
           <button type="button" className={styles.toolButton} onClick={handleInsertImage}>
@@ -145,12 +162,15 @@ const DocumentRichEditor = ({
       <div className={styles.editorBody}>{editor && <EditorContent editor={editor} />}</div>
 
       <div className={styles.footer}>
-        <button type="button" className={styles.secondaryButton} onClick={onCancel}>
-          取消
-        </button>
-        <button type="button" className={styles.primaryButton} disabled={saving} onClick={handleSave}>
-          {saving ? '保存中...' : '保存并生成版本'}
-        </button>
+        <div className={styles.footerHint}>编辑内容会在保存后生成新版本。</div>
+        <div className={styles.footerActions}>
+          <button type="button" className={styles.secondaryButton} onClick={onCancel}>
+            取消
+          </button>
+          <button type="button" className={styles.primaryButton} disabled={saving} onClick={handleSave}>
+            {saving ? '保存中...' : '保存并生成版本'}
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -11,8 +11,9 @@
 
 .modal {
   width: min(640px, 100%);
-  border-radius: 28px;
-  background: #fffdf8;
+  border-radius: var(--workspace-card-radius);
+  border: 1px solid rgba(31, 35, 41, 0.08);
+  background: #ffffff;
   box-shadow: 0 30px 70px rgba(15, 23, 42, 0.22);
 }
 
@@ -25,23 +26,29 @@
 }
 
 .eyebrow {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #9a8f85;
+  font-size: var(--type-eyebrow);
+  color: #245bdb;
+  font-weight: 700;
 }
 
 .title {
+  margin-top: 4px;
+  font-size: var(--type-title-state);
+  color: #1f2329;
+}
+
+.description {
   margin-top: 8px;
-  font-size: 28px;
-  color: #14213d;
+  color: #646a73;
+  line-height: 1.7;
 }
 
 .closeButton {
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(248, 250, 252, 0.92);
-  color: #6b7280;
+  padding: var(--button-padding-md);
+  border-radius: var(--button-radius-lg);
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  font-weight: 700;
 }
 
 .form {
@@ -55,24 +62,24 @@
   align-self: flex-start;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(23, 50, 77, 0.08);
-  color: #17324d;
-  font-size: 12px;
+  background: rgba(51, 112, 255, 0.1);
+  color: #245bdb;
+  font-size: var(--type-eyebrow);
   font-weight: 700;
 }
 
 .quickHint {
-  color: #8d7b68;
-  font-size: 13px;
+  color: #646a73;
+  font-size: var(--type-body-sm);
   line-height: 1.7;
 }
 
 .advancedToggle {
   align-self: flex-start;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(23, 50, 77, 0.08);
-  color: #17324d;
+  padding: var(--button-padding-md);
+  border-radius: var(--button-radius-lg);
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
   font-weight: 700;
 }
 
@@ -80,8 +87,8 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: #6b7280;
-  font-size: 13px;
+  color: #646a73;
+  font-size: var(--type-body-sm);
 }
 
 .field input,
@@ -89,10 +96,25 @@
 .field select {
   width: 100%;
   padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  background: rgba(248, 250, 252, 0.94);
-  color: #14213d;
+  border-radius: var(--button-radius-lg);
+  border: 1px solid var(--field-border);
+  background: var(--field-bg);
+  color: #1f2329;
+}
+
+.field input:hover,
+.field textarea:hover,
+.field select:hover {
+  border-color: var(--field-border-hover);
+  background: var(--field-bg-hover);
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  border-color: var(--field-border-focus);
+  background: #ffffff;
+  box-shadow: var(--field-ring-focus);
 }
 
 .field textarea {
@@ -116,19 +138,47 @@
 
 .secondaryButton,
 .primaryButton {
-  padding: 14px 18px;
-  border-radius: 16px;
+  padding: var(--button-padding-lg);
+  border-radius: var(--button-radius-lg);
   font-weight: 700;
+  transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
 }
 
 .secondaryButton {
-  background: rgba(248, 250, 252, 0.95);
-  color: #4b5563;
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
 }
 
 .primaryButton {
-  color: #fffdf4;
-  background: linear-gradient(135deg, #17324d, #b45309);
+  color: var(--button-primary-text);
+  background: var(--button-primary-bg);
+}
+
+.closeButton:hover,
+.advancedToggle:hover,
+.secondaryButton:hover {
+  background: var(--button-secondary-bg-hover);
+}
+
+.primaryButton:hover {
+  background: var(--button-primary-bg-hover);
+}
+
+.closeButton:active,
+.advancedToggle:active,
+.secondaryButton:active,
+.primaryButton:active {
+  transform: translateY(1px);
+}
+
+.closeButton:active,
+.advancedToggle:active,
+.secondaryButton:active {
+  background: var(--button-secondary-bg-active);
+}
+
+.primaryButton:active {
+  background: var(--button-primary-bg-active);
 }
 
 .primaryButton:disabled {

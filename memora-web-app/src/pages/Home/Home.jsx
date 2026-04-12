@@ -15,14 +15,6 @@ const STATUS_LABELS = {
   IDLE: '空闲',
 }
 
-const ROLE_LABELS = {
-  OWNER: '所有者',
-  ADMIN: '管理员',
-  EDITOR: '编辑者',
-  REVIEWER: '审核者',
-  VIEWER: '只读',
-}
-
 const Home = () => {
   const navigate = useNavigate()
   const { currentUser } = useAuth()
@@ -69,6 +61,10 @@ const Home = () => {
     setEditingKnowledgeBase(knowledgeBase)
     setModalError('')
     setModalOpen(true)
+  }
+
+  const openKnowledgeBase = (knowledgeBaseId) => {
+    navigate(`/kb/${knowledgeBaseId}`)
   }
 
   const handleSubmitKnowledgeBase = async (formData) => {
@@ -145,29 +141,37 @@ const Home = () => {
     <div className={styles.page}>
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>文档工作区</p>
           <h1 className={styles.title}>{dashboard.workspace.name}</h1>
           <p className={styles.description}>
-            先从最近文档继续写，知识库管理放在下面。
+            从最近文档继续编辑，需要新内容时再进入知识库整理。
           </p>
+          <div className={styles.heroStats}>
+            <span className={styles.heroStat}>知识库 {dashboard.knowledgeBaseCount}</span>
+            <span className={styles.heroStat}>文档 {dashboard.documentCount}</span>
+            <span className={styles.heroStat}>同步 {dashboard.syncEnabledKnowledgeBaseCount}</span>
+          </div>
           {lastEditedDocument ? (
             <div className={styles.resumeCard}>
-              <div className={styles.resumeLabel}>上次编辑</div>
+              <span className="ui-chip ui-chip-accent">上次编辑</span>
               <div className={styles.resumeTitle}>{lastEditedDocument.title}</div>
               <div className={styles.resumeMeta}>
-                <span>{lastEditedKnowledgeBase?.name || `知识库 #${lastEditedDocument.knowledgeBaseId}`}</span>
-                <span>{dayjs(lastEditedDocument.updatedAt).format('MM-DD HH:mm')}</span>
+                <span className="ui-chip">
+                  {lastEditedKnowledgeBase?.name || `知识库 #${lastEditedDocument.knowledgeBaseId}`}
+                </span>
+                <span className="ui-chip">{dayjs(lastEditedDocument.updatedAt).format('MM-DD HH:mm')}</span>
               </div>
-              <div className={styles.resumeActions}>
+              <div className={styles.heroDocumentActions}>
                 <button
                   type="button"
-                  className={styles.primaryButton}
+                  className={styles.heroDocumentPrimary}
                   onClick={() => navigate(`/docs/${lastEditedDocument.id}/edit`)}
                 >
-                  继续上次文档
+                  继续编辑
                 </button>
                 <button
                   type="button"
-                  className={styles.secondaryButton}
+                  className={styles.heroDocumentSecondary}
                   onClick={() => navigate(`/docs/${lastEditedDocument.id}`)}
                 >
                   阅读文档
@@ -177,11 +181,12 @@ const Home = () => {
           ) : (
             <div className={styles.resumeEmpty}>
               <strong>还没有最近文档</strong>
-              <p>先创建一个知识库，再进入文档树新建第一篇文档。</p>
+              <p>先新建知识库，再进入知识库写下第一篇文档。</p>
             </div>
           )}
         </div>
         <div className={styles.heroActions}>
+          <span className={styles.heroActionsLabel}>快速开始</span>
           <button
             type="button"
             className={styles.primaryButton}
@@ -201,39 +206,24 @@ const Home = () => {
               }
             }}
           >
-            浏览知识库
+            进入知识库
           </button>
         </div>
       </section>
 
-      <section className={styles.metrics}>
-        {feedback && (
+      {feedback && (
+        <section className={styles.metrics}>
           <div className={`${styles.feedback} ${feedback.type === 'error' ? styles.feedbackError : styles.feedbackSuccess}`}>
             {feedback.message}
           </div>
-        )}
-        <article className={styles.metricCard}>
-          <span className={styles.metricLabel}>知识库</span>
-          <strong className={styles.metricValue}>{dashboard.knowledgeBaseCount}</strong>
-          <span className={styles.metricHint}>当前可访问</span>
-        </article>
-        <article className={styles.metricCard}>
-          <span className={styles.metricLabel}>在线文档</span>
-          <strong className={styles.metricValue}>{dashboard.documentCount}</strong>
-          <span className={styles.metricHint}>文档总量</span>
-        </article>
-        <article className={styles.metricCard}>
-          <span className={styles.metricLabel}>已启用同步</span>
-          <strong className={styles.metricValue}>{dashboard.syncEnabledKnowledgeBaseCount}</strong>
-          <span className={styles.metricHint}>同步开启</span>
-        </article>
-      </section>
+        </section>
+      )}
 
       <section className={styles.contentGrid}>
         <div className={styles.mainColumn}>
           <section className={styles.panel}>
             <div className={styles.panelHeader}>
-              <h2>继续写作</h2>
+              <h2>最近文档</h2>
               <span>{recentDocuments.length} 篇</span>
             </div>
             <div className={styles.recentDocumentList}>
@@ -246,27 +236,29 @@ const Home = () => {
                       className={`${styles.recentDocumentItem} ${index === 0 ? styles.recentDocumentItemPrimary : ''}`}
                     >
                       <div className={styles.recentDocumentBody}>
-                        {index === 0 && <div className={styles.resumeLabel}>最近更新</div>}
+                        {index === 0 && <span className="ui-chip ui-chip-accent">最近更新</span>}
                         <div className={styles.recentDocumentTitle}>{document.title}</div>
                         <div className={styles.recentDocumentMeta}>
-                          <span>{currentKnowledgeBase?.name || `知识库 #${document.knowledgeBaseId}`}</span>
-                          <span>{dayjs(document.updatedAt).format('MM-DD HH:mm')}</span>
+                          <span className="ui-chip">
+                            {currentKnowledgeBase?.name || `知识库 #${document.knowledgeBaseId}`}
+                          </span>
+                          <span className="ui-chip">{dayjs(document.updatedAt).format('MM-DD HH:mm')}</span>
                         </div>
                       </div>
                       <div className={styles.recentDocumentActions}>
                         <button
                           type="button"
                           className={styles.cardActionButton}
-                          onClick={() => navigate(`/docs/${document.id}`)}
+                          onClick={() => navigate(`/docs/${document.id}/edit`)}
                         >
-                          阅读
+                          继续编辑
                         </button>
                         <button
                           type="button"
                           className={styles.cardActionButton}
-                          onClick={() => navigate(`/docs/${document.id}/edit`)}
+                          onClick={() => navigate(`/docs/${document.id}`)}
                         >
-                          继续编辑
+                          阅读文档
                         </button>
                       </div>
                     </article>
@@ -275,7 +267,7 @@ const Home = () => {
               ) : (
                 <div className={styles.emptyRecentDocuments}>
                   <strong>还没有最近文档</strong>
-                  <p>先创建一个知识库，再新建第一篇文档。</p>
+                  <p>先新建知识库，再进入知识库写下第一篇文档。</p>
                 </div>
               )}
             </div>
@@ -283,7 +275,7 @@ const Home = () => {
 
           <section className={styles.panel}>
             <div className={styles.panelHeader}>
-              <h2>知识库</h2>
+              <h2>全部知识库</h2>
               <span>{knowledgeBases.length} 个</span>
             </div>
             <div className={styles.knowledgeToolbar}>
@@ -291,7 +283,7 @@ const Home = () => {
                 className={styles.search}
                 value={keyword}
                 onChange={(event) => setKeyword(event.target.value)}
-                placeholder="搜索知识库"
+                placeholder="搜索知识库名称"
               />
               <button
                 type="button"
@@ -302,52 +294,64 @@ const Home = () => {
                 新建知识库
               </button>
             </div>
-            <div className={styles.knowledgeGrid}>
+            <div className={styles.knowledgeList}>
               {knowledgeBases.length > 0 ? (
                 knowledgeBases.map((item) => (
                   <article
                     key={item.id}
-                    className={styles.knowledgeCard}
-                    onClick={() => navigate(`/kb/${item.id}`)}
+                    className={styles.knowledgeRow}
+                    onClick={() => openKnowledgeBase(item.id)}
                   >
-                    <div className={styles.knowledgeHeader}>
-                      <div>
+                    <div className={styles.knowledgeRowMain}>
+                      <div className={styles.knowledgeRowHead}>
                         <div className={styles.knowledgeTitle}>{item.name}</div>
-                        <div className={styles.knowledgeSlug}>/{item.slug}</div>
+                        <span className="ui-chip">{STATUS_LABELS[item.syncStatus] || item.syncStatus}</span>
                       </div>
-                      <span className={styles.statusTag}>{STATUS_LABELS[item.syncStatus] || item.syncStatus}</span>
-                    </div>
-                    <p className={styles.knowledgeDescription}>{item.description}</p>
-                    <div className={styles.knowledgeMeta}>
-                      <span>{item.documentCount} 篇文档</span>
-                      <span>{item.syncEnabled ? '已启用同步' : '手工维护'}</span>
-                      <span>{ROLE_LABELS[item.currentRole] || item.currentRole || '未知角色'}</span>
-                      <span>{item.lastSyncAt ? `同步于 ${dayjs(item.lastSyncAt).format('MM-DD HH:mm')}` : '尚未同步'}</span>
+                      <div className={styles.knowledgeMeta}>
+                        <span className="ui-chip">{item.documentCount} 篇文档</span>
+                        <span className="ui-chip">{item.syncEnabled ? '已连接同步' : '手工维护'}</span>
+                        {item.lastSyncAt ? <span className="ui-chip">{dayjs(item.lastSyncAt).format('MM-DD HH:mm')}</span> : null}
+                      </div>
                     </div>
                     <div className={styles.knowledgeActions}>
                       <button
                         type="button"
                         className={styles.cardActionButton}
-                        disabled={!item.canManage}
-                        onClick={(event) => openEditModal(item, event)}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          openKnowledgeBase(item.id)
+                        }}
                       >
-                        编辑
+                        进入知识库
                       </button>
-                      <button
-                        type="button"
-                        className={styles.cardActionButtonDanger}
-                        disabled={!item.canManage}
-                        onClick={(event) => handleDeleteKnowledgeBase(item, event)}
-                      >
-                        删除
-                      </button>
+                      <details className={styles.knowledgeMoreActions} onClick={(event) => event.stopPropagation()}>
+                        <summary className={styles.cardActionButton}>更多</summary>
+                        <div className={styles.knowledgeMoreMenu}>
+                          <button
+                            type="button"
+                            className={styles.cardActionButton}
+                            disabled={!item.canManage}
+                            onClick={(event) => openEditModal(item, event)}
+                          >
+                            知识库设置
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.cardActionButtonDanger}
+                            disabled={!item.canManage}
+                            onClick={(event) => handleDeleteKnowledgeBase(item, event)}
+                          >
+                            删除知识库
+                          </button>
+                        </div>
+                      </details>
                     </div>
                   </article>
                 ))
               ) : (
                 <div className={styles.emptyRecentDocuments}>
                   <strong>没有匹配的知识库</strong>
-                  <p>可以直接创建新的知识库，或者调整搜索词继续查找。</p>
+                  <p>调整搜索词，或者直接新建知识库开始写作。</p>
                 </div>
               )}
             </div>
@@ -357,11 +361,12 @@ const Home = () => {
         <aside className={styles.sideColumn}>
           <details className={styles.foldPanel}>
             <summary className={styles.foldSummary}>
-              <div>
-                <h2>同步信息</h2>
+              <div className={styles.foldSummaryMain}>
+                <div className={styles.foldEyebrow}>低频信息</div>
+                <h2>同步概览</h2>
                 <span>{dashboard.pendingSyncJobCount} 个异常任务</span>
               </div>
-              <span className={styles.foldHint}>默认收起</span>
+              <span className={styles.foldHint}>按需查看</span>
             </summary>
             <div className={styles.timeline}>
               {(dashboard.recentSyncJobs || []).length > 0 ? (
@@ -388,11 +393,12 @@ const Home = () => {
 
           <details className={styles.foldPanel}>
             <summary className={styles.foldSummary}>
-              <div>
+              <div className={styles.foldSummaryMain}>
+                <div className={styles.foldEyebrow}>低频信息</div>
                 <h2>协作成员</h2>
                 <span>{(dashboard.members || []).length} 人</span>
               </div>
-              <span className={styles.foldHint}>默认收起</span>
+              <span className={styles.foldHint}>按需查看</span>
             </summary>
             <div className={styles.memberList}>
               {(dashboard.members || []).length > 0 ? (

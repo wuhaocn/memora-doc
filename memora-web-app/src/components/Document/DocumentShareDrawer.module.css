@@ -12,7 +12,8 @@
   width: min(460px, 100%);
   height: 100%;
   padding: 24px;
-  background: #fffdf8;
+  background: #ffffff;
+  border-left: 1px solid rgba(31, 35, 41, 0.08);
   box-shadow: -18px 0 40px rgba(15, 23, 42, 0.16);
   overflow-y: auto;
 }
@@ -26,15 +27,14 @@
 
 .eyebrow {
   font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #9a8f85;
+  color: #245bdb;
+  font-weight: 700;
 }
 
 .title {
-  margin-top: 8px;
+  margin-top: 4px;
   font-size: 28px;
-  color: #14213d;
+  color: #1f2329;
 }
 
 .description {
@@ -44,10 +44,11 @@
 }
 
 .closeButton {
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(248, 250, 252, 0.92);
-  color: #6b7280;
+  padding: var(--button-padding-md);
+  border-radius: var(--button-radius-lg);
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  font-weight: 700;
 }
 
 .section {
@@ -56,7 +57,7 @@
 
 .label {
   margin-bottom: 10px;
-  color: #8d7b68;
+  color: #646a73;
   font-size: 13px;
   font-weight: 700;
 }
@@ -64,8 +65,8 @@
 .scopeCard,
 .note {
   padding: 16px;
-  border-radius: 18px;
-  background: rgba(248, 250, 252, 0.92);
+  border-radius: 14px;
+  background: rgba(247, 248, 250, 0.94);
 }
 
 .scopeCard p,
@@ -84,18 +85,40 @@
   flex: 1;
   min-width: 0;
   padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  background: rgba(248, 250, 252, 0.94);
-  color: #14213d;
+  border-radius: 14px;
+  border: 1px solid rgba(31, 35, 41, 0.1);
+  background: rgba(247, 248, 250, 0.94);
+  color: #1f2329;
 }
 
 .primaryButton {
-  padding: 14px 18px;
-  border-radius: 16px;
-  color: #fffdf4;
+  padding: var(--button-padding-lg);
+  border-radius: var(--button-radius-lg);
+  color: var(--button-primary-text);
   font-weight: 700;
-  background: linear-gradient(135deg, #17324d, #b45309);
+  background: var(--button-primary-bg);
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+.closeButton:hover {
+  background: var(--button-secondary-bg-hover);
+}
+
+.primaryButton:hover {
+  background: var(--button-primary-bg-hover);
+}
+
+.closeButton:active,
+.primaryButton:active {
+  transform: translateY(1px);
+}
+
+.closeButton:active {
+  background: var(--button-secondary-bg-active);
+}
+
+.primaryButton:active {
+  background: var(--button-primary-bg-active);
 }
 
 @media (max-width: 720px) {

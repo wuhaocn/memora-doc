@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { IconMenuFold, IconMenuUnfold, IconHome, IconFolder } from '@arco-design/web-react/icon'
 import { Avatar } from '@arco-design/web-react'
@@ -10,9 +10,20 @@ import styles from './Header.module.css'
 const Header = ({ onToggleSidebar }) => {
   const location = useLocation()
   const { currentUser, logout } = useAuth()
+  const [scrolled, setScrolled] = useState(false)
   const { knowledgeBases } = useKnowledgeBaseNavigation(currentUser.tenantId, {
     errorMessage: '加载头部知识库导航失败',
   })
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 8)
+    }
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const currentKnowledgeBaseRoute = useMemo(() => {
     if (location.pathname.startsWith('/kb/')) {
@@ -38,7 +49,7 @@ const Header = ({ onToggleSidebar }) => {
   ]
 
   return (
-    <header className={styles.header}>
+    <header className={`${styles.header} ${scrolled ? styles.scrolled : ''}`}>
       <div className={styles.left}>
         <button className={styles.menuButton} onClick={onToggleSidebar} type="button" aria-label="切换侧边栏">
           {location.pathname.startsWith('/kb/') ? <IconMenuFold /> : <IconMenuUnfold />}

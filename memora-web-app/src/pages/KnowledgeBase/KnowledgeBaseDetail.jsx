@@ -5,6 +5,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import DocumentActionModal from '../../components/Document/DocumentActionModal'
 import DocumentBatchMoveModal from '../../components/Document/DocumentBatchMoveModal'
 import DocumentShareDrawer from '../../components/Document/DocumentShareDrawer'
+import DocumentVersionDiff from '../../components/Document/DocumentVersionDiff'
+import DocumentVersionList from '../../components/Document/DocumentVersionList'
 import KnowledgeBaseFormModal from '../../components/KnowledgeBase/KnowledgeBaseFormModal'
 import KnowledgeBasePermissionModal from '../../components/KnowledgeBase/KnowledgeBasePermissionModal'
 import { documentApi } from '../../services/api/documentApi'
@@ -286,6 +288,7 @@ const KnowledgeBaseDetail = () => {
   const [expandedFolderIds, setExpandedFolderIds] = useState([])
   const [treePanelCollapsed, setTreePanelCollapsed] = useState(false)
   const [focusMode, setFocusMode] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const [knowledgeBaseInfoVisible, setKnowledgeBaseInfoVisible] = useState(false)
   const [contextPanelCollapsed, setContextPanelCollapsed] = useState(true)
   const [versions, setVersions] = useState([])
@@ -369,6 +372,16 @@ const KnowledgeBaseDetail = () => {
   }, [id])
 
   useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 24)
+    }
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
     if (documents.length === 0) {
       setSelectedDocumentId(null)
       return
@@ -408,7 +421,7 @@ const KnowledgeBaseDetail = () => {
       return isTreeItemVisible(item, documentMap, expandedFolderIdSet)
     }
     const searchValue = deferredSearch.toLowerCase()
-    return item.title.toLowerCase().includes(searchValue) || (item.summary || '').toLowerCase().includes(searchValue)
+    return item.title.toLowerCase().includes(searchValue)
   })
   const selectedDocument = documents.find((item) => item.id === selectedDocumentId) || visibleDocuments[0] || documents[0]
   const siblingDocuments = getSiblingDocuments(documents, selectedDocument)
@@ -430,6 +443,19 @@ const KnowledgeBaseDetail = () => {
   const selectedDocumentVersionTargetId = selectedDocument?.docType === 'DOC' ? selectedDocument.id : null
   const shouldRenderRichPreview = selectedDocument?.docType === 'DOC' && !!selectedDocument?.content
   const compactKnowledgeBaseDescription = knowledgeBase?.description?.trim()
+  const shouldShowContextPanel = !focusMode && !contextPanelCollapsed && selectedDocument?.docType === 'DOC'
+  const hasActiveSearch = !!deferredSearch.trim()
+  const treePanelStatusText = hasActiveSearch
+    ? `找到 ${visibleDocuments.length} 项`
+    : batchMode
+      ? `已选 ${selectedDocumentIds.length} 项`
+      : `${documents.length} 个节点`
+  const hasFolderNodes = documents.some((item) => item.docType === 'FOLDER')
+  const selectedFolderChildren = selectedDocument
+    ? documents.filter((item) => (item.parentId ?? 0) === selectedDocument.id)
+    : []
+  const selectedFolderDocumentCount = selectedFolderChildren.filter((item) => item.docType === 'DOC').length
+  const selectedFolderDirectoryCount = selectedFolderChildren.filter((item) => item.docType === 'FOLDER').length
 
   useEffect(() => {
     if (!selectedDocumentVersionTargetId) {
@@ -586,6 +612,16 @@ const KnowledgeBaseDetail = () => {
     setBatchMoveError('')
   }
 
+  const handleToggleBatchMode = () => {
+    if (batchMode) {
+      clearBatchSelection()
+      return
+    }
+
+    setBatchMode(true)
+    setBatchMoveError('')
+  }
+
   const clearDragState = () => {
     setDraggingDocumentId(null)
     setDragOverDocumentId(null)
@@ -610,6 +646,11 @@ const KnowledgeBaseDetail = () => {
   const handleTreeItemKeyDown = (itemId, event) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
+      if (batchMode) {
+        toggleDocumentSelection(itemId)
+        return
+      }
+
       setSelectedDocumentId(itemId)
     }
   }
@@ -1015,79 +1056,87 @@ const KnowledgeBaseDetail = () => {
   }
 
   return (
-    <div className={styles.page}>
-      {knowledgeBaseInfoVisible && (
-        <section className={styles.hero}>
-          <div className={styles.heroMain}>
-            <div className={styles.breadcrumb}>
-              <Link to="/">工作台</Link>
-              <span>/</span>
-              <span>{knowledgeBase.name}</span>
-            </div>
-            <div className={styles.heroTitleRow}>
-              <h1 className={styles.title}>{knowledgeBase.name}</h1>
-              <div className={styles.syncBadge}>{STATUS_LABELS[knowledgeBase.syncStatus] || knowledgeBase.syncStatus}</div>
-            </div>
-            {compactKnowledgeBaseDescription && (
-              <p className={styles.description}>{compactKnowledgeBaseDescription}</p>
-            )}
-            <div className={styles.heroMeta}>
-              <span className={styles.metaPill}>{knowledgeBase.documentCount} 个节点</span>
-              <span className={styles.metaPill}>{ROLE_LABELS[knowledgeBase.currentRole] || knowledgeBase.currentRole || '未知角色'}</span>
-              <span className={styles.metaPill}>{knowledgeBase.syncEnabled ? '已启用同步' : '未启用同步'}</span>
-              {knowledgeBase.permissionRestricted && <span className={styles.metaPill}>独立权限</span>}
-            </div>
+    <div className={`${styles.page} ${scrolled ? styles.pageScrolled : ''}`}>
+      <header className={`${styles.hero} ${scrolled ? styles.heroScrolled : ''}`}>
+        <div className={styles.heroMain}>
+          <div className={styles.breadcrumb}>
+            <Link to="/">工作台</Link>
+            <span>/</span>
+            <span>{knowledgeBase.name}</span>
           </div>
-          <div className={styles.heroActions}>
-            <div className={styles.heroActionGrid}>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                disabled={!knowledgeBase.syncEnabled || syncing || !canWriteKnowledgeBase}
-                onClick={handleTriggerSync}
-              >
-                {syncing ? '同步中...' : '立即同步'}
-              </button>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                disabled={!canManageKnowledgeBase}
-                onClick={() => {
-                  setModalError('')
-                  setEditing(true)
-                }}
-              >
-                编辑知识库
-              </button>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                disabled={!canManageKnowledgeBase}
-                onClick={openPermissionModal}
-              >
-                权限配置
-              </button>
-              <details className={styles.moreActions}>
-                <summary className={styles.secondaryButton}>更多操作</summary>
-                <div className={styles.moreActionsMenu}>
-                  <button
-                    type="button"
-                    className={styles.secondaryButton}
-                    onClick={() => setKnowledgeBaseInfoVisible(false)}
-                  >
-                    隐藏信息
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.dangerButton}
-                    disabled={!canManageKnowledgeBase}
-                    onClick={handleDeleteKnowledgeBase}
-                  >
-                    删除知识库
-                  </button>
-                </div>
-              </details>
-            </div>
+          <div className={styles.heroTitleRow}>
+            <h1 className={styles.title}>{knowledgeBase.name}</h1>
+            <div className={styles.syncBadge}>{STATUS_LABELS[knowledgeBase.syncStatus] || knowledgeBase.syncStatus}</div>
+          </div>
+          <div className={styles.heroMeta}>
+            <span className={styles.metaPill}>{knowledgeBase.documentCount} 个节点</span>
+            <span className={styles.metaPill}>{ROLE_LABELS[knowledgeBase.currentRole] || knowledgeBase.currentRole || '未知角色'}</span>
+          </div>
+        </div>
+        <div className={styles.heroActions}>
+          <div className={styles.heroActionGrid}>
+            <details className={styles.moreActions}>
+              <summary className={styles.secondaryButton}>更多</summary>
+              <div className={styles.moreActionsMenu}>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => setKnowledgeBaseInfoVisible((current) => !current)}
+                >
+                  {knowledgeBaseInfoVisible ? '收起说明' : '知识库说明'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  disabled={!knowledgeBase.syncEnabled || syncing || !canWriteKnowledgeBase}
+                  onClick={handleTriggerSync}
+                >
+                  {syncing ? '同步中...' : '同步一次'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  disabled={!canManageKnowledgeBase}
+                  onClick={() => {
+                    setModalError('')
+                    setEditing(true)
+                  }}
+                >
+                  知识库设置
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  disabled={!canManageKnowledgeBase}
+                  onClick={openPermissionModal}
+                >
+                  访问权限
+                </button>
+                <button
+                  type="button"
+                  className={styles.dangerButton}
+                  disabled={!canManageKnowledgeBase}
+                  onClick={handleDeleteKnowledgeBase}
+                >
+                  删除知识库
+                </button>
+              </div>
+            </details>
+          </div>
+        </div>
+      </header>
+
+      {knowledgeBaseInfoVisible && (
+        <section className={styles.heroInfoPanel}>
+          <div className={styles.heroInfoMain}>
+            <strong className={styles.heroInfoLabel}>知识库说明</strong>
+            <p className={styles.description}>
+              {compactKnowledgeBaseDescription || '当前知识库用于承载文档协作和目录整理，主流程仍以继续写作和阅读为主。'}
+            </p>
+          </div>
+          <div className={styles.heroInfoMeta}>
+            <span className={styles.metaPill}>{knowledgeBase.syncEnabled ? '已启用同步' : '未启用同步'}</span>
+            {knowledgeBase.permissionRestricted && <span className={styles.metaPill}>独立权限</span>}
           </div>
         </section>
       )}
@@ -1119,8 +1168,8 @@ const KnowledgeBaseDetail = () => {
           )}
           <div className={styles.panelHeader}>
             <div>
-              <h2>文档树</h2>
-              <span className={styles.panelHint}>{documents.length} 个</span>
+              <h2>文档</h2>
+              <span className={styles.panelHint}>{treePanelStatusText}</span>
             </div>
             <div className={styles.panelActions}>
               <button
@@ -1128,7 +1177,7 @@ const KnowledgeBaseDetail = () => {
                 className={styles.smallButton}
                 onClick={() => setTreePanelCollapsed(true)}
               >
-                隐藏文档树
+                收起
               </button>
               <button
                 type="button"
@@ -1138,14 +1187,6 @@ const KnowledgeBaseDetail = () => {
               >
                 新建文档
               </button>
-              <button
-                type="button"
-                className={styles.smallButton}
-                disabled={!canWriteKnowledgeBase}
-                onClick={() => openCreateDocumentModal('FOLDER')}
-              >
-                新建目录
-              </button>
               <details className={styles.inlineMoreActions}>
                 <summary className={styles.smallButton}>更多</summary>
                 <div className={styles.inlineMoreActionsMenu}>
@@ -1153,28 +1194,16 @@ const KnowledgeBaseDetail = () => {
                     type="button"
                     className={styles.toolButton}
                     disabled={!canWriteKnowledgeBase}
-                    onClick={() => {
-                      if (batchMode) {
-                        clearBatchSelection()
-                      } else {
-                        setBatchMode(true)
-                      }
-                    }}
+                    onClick={() => openCreateDocumentModal('FOLDER')}
                   >
-                    {batchMode ? '退出批量' : '批量模式'}
+                    新建目录
                   </button>
                   <button
                     type="button"
                     className={styles.toolButton}
                     onClick={() => setKnowledgeBaseInfoVisible((current) => !current)}
                   >
-                    {knowledgeBaseInfoVisible ? '隐藏知识库信息' : '知识库设置'}
-                  </button>
-                  <button type="button" className={styles.toolButton} onClick={expandAllFolders}>
-                    展开目录
-                  </button>
-                  <button type="button" className={styles.toolButton} onClick={collapseToTopLevelFolders}>
-                    收起目录
+                    {knowledgeBaseInfoVisible ? '收起说明' : '知识库说明'}
                   </button>
                 </div>
               </details>
@@ -1185,12 +1214,48 @@ const KnowledgeBaseDetail = () => {
               className={styles.search}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="搜索文档标题或摘要"
+              placeholder="搜索文档标题"
             />
+          </div>
+          <div className={styles.treeModeBar}>
+            <div className={styles.treeModeMeta}>
+              <span className={`${styles.modeBadge} ${batchMode ? styles.modeBadgeActive : ''}`}>
+                {batchMode ? '批量整理中' : hasActiveSearch ? '搜索结果' : '全部内容'}
+              </span>
+            </div>
+            <div className={styles.treeModeActions}>
+              {hasFolderNodes && (
+                <>
+                <button type="button" className={styles.textButton} onClick={expandAllFolders}>
+                  展开
+                </button>
+                <button type="button" className={styles.textButton} onClick={collapseToTopLevelFolders}>
+                  收起
+                </button>
+                </>
+              )}
+              <button
+                type="button"
+                className={`${styles.modeButton} ${batchMode ? styles.modeButtonActive : ''}`}
+                disabled={!canWriteKnowledgeBase}
+                onClick={handleToggleBatchMode}
+              >
+                {batchMode ? '退出批量' : '批量整理'}
+              </button>
+            </div>
+          </div>
+          <div className={styles.treeHint}>
+            {batchMode
+              ? '选择文档或目录后，再移动或删除。'
+              : dragSortEnabled
+                ? '可直接拖拽排序。'
+                : hasActiveSearch
+                  ? '按标题过滤，层级关系保持不变。'
+                  : '继续像文档目录一样浏览即可。'}
           </div>
           {batchMode && (
             <div className={styles.batchToolbar}>
-              <span>已选择 {selectedDocumentIds.length} 个节点</span>
+              <span>已选 {selectedDocumentIds.length} 项</span>
               <div className={styles.batchActions}>
                 <button
                   type="button"
@@ -1201,7 +1266,7 @@ const KnowledgeBaseDetail = () => {
                     setBatchMoveOpen(true)
                   }}
                 >
-                  批量移动
+                  移动
                 </button>
                 <button
                   type="button"
@@ -1209,10 +1274,10 @@ const KnowledgeBaseDetail = () => {
                   disabled={selectedDocumentIds.length === 0 || batchDeleting || !canWriteKnowledgeBase}
                   onClick={handleBatchDelete}
                 >
-                  {batchDeleting ? '删除中...' : '批量删除'}
+                  {batchDeleting ? '删除中...' : '删除'}
                 </button>
                 <button type="button" className={styles.toolButton} onClick={clearBatchSelection}>
-                  清空选择
+                  取消
                 </button>
               </div>
             </div>
@@ -1230,7 +1295,7 @@ const KnowledgeBaseDetail = () => {
                       disabled={!canWriteKnowledgeBase}
                       onClick={() => openCreateDocumentModal('DOC')}
                     >
-                      创建第一篇文档
+                      新建第一篇文档
                     </button>
                     <button
                       type="button"
@@ -1250,7 +1315,8 @@ const KnowledgeBaseDetail = () => {
                     tabIndex={0}
                     className={[
                       styles.treeItem,
-                      selectedDocument?.id === item.id ? styles.active : '',
+                      !batchMode && selectedDocument?.id === item.id ? styles.active : '',
+                      batchMode && selectedDocumentIdSet.has(item.id) ? styles.batchSelected : '',
                       draggingDocumentId === item.id ? styles.dragging : '',
                       dragOverDocumentId === item.id
                         ? dragOverPosition === 'after'
@@ -1260,9 +1326,15 @@ const KnowledgeBaseDetail = () => {
                     ]
                       .filter(Boolean)
                       .join(' ')}
-                    style={{ paddingLeft: `${16 + item.depth * 18}px` }}
                     draggable={dragSortEnabled}
-                    onClick={() => setSelectedDocumentId(item.id)}
+                    onClick={() => {
+                      if (batchMode) {
+                        toggleDocumentSelection(item.id)
+                        return
+                      }
+
+                      setSelectedDocumentId(item.id)
+                    }}
                     onKeyDown={(event) => handleTreeItemKeyDown(item.id, event)}
                     onDragStart={(event) => handleDragStart(event, item)}
                     onDragOver={(event) => handleDragOver(event, item)}
@@ -1270,6 +1342,7 @@ const KnowledgeBaseDetail = () => {
                     onDragEnd={clearDragState}
                   >
                     <div className={styles.treeMain}>
+                      <span className={styles.treeIndent} style={{ width: `${item.depth * 10}px` }} aria-hidden="true" />
                       {item.docType === 'FOLDER' ? (
                         <button
                           type="button"
@@ -1298,6 +1371,9 @@ const KnowledgeBaseDetail = () => {
                       />
                       <span className={styles.treeTitle}>{item.title}</span>
                     </div>
+                    <span className={styles.treeItemTail} aria-hidden="true">
+                      {!batchMode ? '›' : ''}
+                    </span>
                   </div>
                 ))
               ) : (
@@ -1315,7 +1391,7 @@ const KnowledgeBaseDetail = () => {
                 className={styles.smallButton}
                 onClick={() => setTreePanelCollapsed(false)}
               >
-                显示文档树
+                展开文档树
               </button>
             </div>
           )}
@@ -1330,158 +1406,155 @@ const KnowledgeBaseDetail = () => {
                   disabled={!canWriteKnowledgeBase}
                   onClick={() => openCreateDocumentModal('DOC')}
                 >
-                  创建第一篇文档
+                  新建第一篇文档
                 </button>
                 <button
                   type="button"
                   className={styles.secondaryButton}
                   disabled={!canWriteKnowledgeBase}
                   onClick={() => openCreateDocumentModal('FOLDER')}
-                    >
-                      新建目录
-                    </button>
+                >
+                  新建目录
+                </button>
               </div>
             </div>
           ) : selectedDocument ? (
             <section className={`${styles.documentCard} ${focusMode ? styles.documentCardFocus : ''}`}>
               <div className={styles.documentHeader}>
                 <div className={styles.documentHeading}>
-                  {selectedDocument.path ? <div className={styles.documentPath}>{selectedDocument.path}</div> : null}
+                  <div className={styles.documentEyebrow}>
+                    {selectedDocument.docType === 'DOC' ? '文档' : '目录'}
+                  </div>
                   <h2 className={styles.documentTitle}>{selectedDocument.title}</h2>
                   <div className={styles.documentSubline}>
-                    <span>v{selectedDocument.versionNo}</span>
+                    {selectedDocument.docType === 'DOC' && <span>v{selectedDocument.versionNo}</span>}
+                    {selectedDocument.docType === 'FOLDER' && <span>继续在这里整理内容</span>}
                     {selectedDocument.updatedAt && <span>{dayjs(selectedDocument.updatedAt).format('MM-DD HH:mm')}</span>}
                     {selectedDocument.syncStatus && selectedDocument.syncStatus !== 'SYNCED' && (
                       <span>{STATUS_LABELS[selectedDocument.syncStatus] || selectedDocument.syncStatus}</span>
                     )}
                   </div>
                 </div>
-                <span className={styles.documentTypeBadge}>{TYPE_LABELS[selectedDocument.docType] || selectedDocument.docType}</span>
-              </div>
-              <div className={styles.documentToolbar}>
-                {selectedDocument.docType === 'DOC' && (
-                  <button
-                    type="button"
-                    className={styles.primaryButton}
-                    disabled={!canWriteKnowledgeBase}
-                    onClick={handleOpenEditorPage}
-                  >
-                    继续编辑
-                  </button>
-                )}
-                {selectedDocument.docType === 'DOC' && (
-                  <button
-                    type="button"
-                    className={styles.secondaryButton}
-                    onClick={() => setShareOpen(true)}
-                  >
-                    分享文档
-                  </button>
-                )}
-                {selectedDocument.docType === 'DOC' && (
-                  <button
-                    type="button"
-                    className={styles.toolButton}
-                    onClick={handleOpenVersionPanel}
-                  >
-                    查看版本
-                  </button>
-                )}
-                {selectedDocument.docType === 'FOLDER' && (
-                  <button
-                    type="button"
-                    className={styles.primaryButton}
-                    disabled={!canWriteKnowledgeBase}
-                    onClick={() => openCreateDocumentModal('DOC')}
-                  >
-                    在当前目录新建文档
-                  </button>
-                )}
-                {selectedDocument.docType === 'FOLDER' && (
-                  <button
-                    type="button"
-                    className={styles.secondaryButton}
-                    disabled={!canWriteKnowledgeBase}
-                    onClick={() => openCreateDocumentModal('FOLDER')}
-                  >
-                    新建子目录
-                  </button>
-                )}
-                <details className={styles.inlineMoreActions}>
-                  <summary className={styles.toolButton}>更多操作</summary>
-                  <div className={styles.inlineMoreActionsMenu}>
+                <div className={styles.documentToolbar}>
+                  {selectedDocument.docType === 'DOC' && (
                     <button
                       type="button"
-                      className={styles.toolButton}
+                      className={styles.primaryButton}
                       disabled={!canWriteKnowledgeBase}
-                      onClick={openEditDocumentModal}
+                      onClick={handleOpenEditorPage}
                     >
-                      重命名 / 移动
+                      继续编辑
                     </button>
-                    {selectedDocument.docType === 'DOC' && (
+                  )}
+                  {selectedDocument.docType === 'DOC' && (
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={() => setShareOpen(true)}
+                    >
+                      分享文档
+                    </button>
+                  )}
+                  {selectedDocument.docType === 'DOC' && (
+                    <button
+                      type="button"
+                      className={contextPanelCollapsed ? styles.toolButton : styles.secondaryButton}
+                      onClick={handleOpenVersionPanel}
+                    >
+                      查看版本
+                    </button>
+                  )}
+                  {selectedDocument.docType === 'FOLDER' && (
+                    <button
+                      type="button"
+                      className={styles.primaryButton}
+                      disabled={!canWriteKnowledgeBase}
+                      onClick={() => openCreateDocumentModal('DOC')}
+                    >
+                      新建文档
+                    </button>
+                  )}
+                  {selectedDocument.docType === 'FOLDER' && (
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      disabled={!canWriteKnowledgeBase}
+                      onClick={() => openCreateDocumentModal('FOLDER')}
+                    >
+                      新建目录
+                    </button>
+                  )}
+                  <details className={styles.inlineMoreActions}>
+                    <summary className={styles.toolButton}>更多</summary>
+                    <div className={styles.inlineMoreActionsMenu}>
                       <button
                         type="button"
                         className={styles.toolButton}
-                        onClick={() => navigate(`/docs/${selectedDocument.id}`)}
+                        disabled={!canWriteKnowledgeBase}
+                        onClick={openEditDocumentModal}
                       >
-                        阅读文档
+                        整理节点
                       </button>
-                    )}
-                    {selectedDocument.docType === 'DOC' && (
-                      <button type="button" className={styles.toolButton} onClick={handleToggleFocusMode}>
-                        {focusMode ? '退出专注' : '专注模式'}
-                      </button>
-                    )}
-                    {!focusMode && (
+                      {selectedDocument.docType === 'DOC' && (
+                        <button
+                          type="button"
+                          className={styles.toolButton}
+                          onClick={() => navigate(`/docs/${selectedDocument.id}`)}
+                        >
+                          阅读文档
+                        </button>
+                      )}
+                      {selectedDocument.docType === 'DOC' && (
+                        <button type="button" className={styles.toolButton} onClick={handleToggleFocusMode}>
+                          {focusMode ? '退出专注' : '专注模式'}
+                        </button>
+                      )}
                       <button
                         type="button"
                         className={styles.toolButton}
-                        onClick={() => setContextPanelCollapsed((current) => !current)}
+                        disabled={!canMoveUp || dragSorting || !canWriteKnowledgeBase}
+                        onClick={() => handleReorderDocument(-1)}
                       >
-                        {contextPanelCollapsed ? '展开侧栏' : '收起侧栏'}
+                        上移
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      className={styles.toolButton}
-                      disabled={!canMoveUp || dragSorting || !canWriteKnowledgeBase}
-                      onClick={() => handleReorderDocument(-1)}
-                    >
-                      上移
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.toolButton}
-                      disabled={!canMoveDown || dragSorting || !canWriteKnowledgeBase}
-                      onClick={() => handleReorderDocument(1)}
-                    >
-                      下移
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.toolButtonDanger}
-                      disabled={!canWriteKnowledgeBase}
-                      onClick={handleDeleteDocument}
-                    >
-                      删除节点
-                    </button>
-                  </div>
-                </details>
+                      <button
+                        type="button"
+                        className={styles.toolButton}
+                        disabled={!canMoveDown || dragSorting || !canWriteKnowledgeBase}
+                        onClick={() => handleReorderDocument(1)}
+                      >
+                        下移
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.toolButtonDanger}
+                        disabled={!canWriteKnowledgeBase}
+                        onClick={handleDeleteDocument}
+                      >
+                        删除节点
+                      </button>
+                    </div>
+                  </details>
+                </div>
               </div>
-              {selectedDocument.summary ? <p className={styles.documentSummary}>{selectedDocument.summary}</p> : null}
+              {selectedDocument.summary && selectedDocument.docType === 'DOC' ? (
+                <p className={styles.documentSummary}>{selectedDocument.summary}</p>
+              ) : null}
               {focusMode && (
                 <div className={styles.focusBanner}>
-                  当前处于专注模式，左右信息栏已收起，适合连续阅读当前文档。
+                  已进入专注模式，只保留当前文档正文。
                 </div>
               )}
               <div className={styles.documentStage}>
                 {selectedDocument.docType === 'FOLDER' ? (
                   <section className={styles.folderStage}>
-                    <div className={styles.folderStageLabel}>当前选中目录</div>
+                    <div className={styles.folderStageLabel}>当前目录</div>
                     <h3 className={styles.folderStageTitle}>{selectedDocument.title}</h3>
-                    <p className={styles.folderStageText}>
-                      目录本身不编辑正文，直接在这里继续新建内容。
-                    </p>
+                    <div className={styles.folderStageMeta}>
+                      <span className={styles.folderStageStat}>{selectedFolderDocumentCount} 篇文档</span>
+                      <span className={styles.folderStageStat}>{selectedFolderDirectoryCount} 个目录</span>
+                    </div>
+                    <p className={styles.folderStageText}>目录本身不写正文，继续新建文档或目录就可以。</p>
                     <div className={styles.folderStageActions}>
                       <button
                         type="button"
@@ -1489,7 +1562,7 @@ const KnowledgeBaseDetail = () => {
                         disabled={!canWriteKnowledgeBase}
                         onClick={() => openCreateDocumentModal('DOC')}
                       >
-                        在当前目录新建文档
+                        新建文档
                       </button>
                       <button
                         type="button"
@@ -1497,7 +1570,7 @@ const KnowledgeBaseDetail = () => {
                         disabled={!canWriteKnowledgeBase}
                         onClick={() => openCreateDocumentModal('FOLDER')}
                       >
-                        新建子目录
+                        新建目录
                       </button>
                     </div>
                   </section>
@@ -1520,127 +1593,72 @@ const KnowledgeBaseDetail = () => {
           )}
         </div>
 
-        <aside
-          className={[
-            styles.contextPanel,
-            focusMode ? styles.focusHidden : '',
-            !focusMode && contextPanelCollapsed ? styles.contextPanelCollapsed : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
+        <aside className={[styles.contextPanel, shouldShowContextPanel ? '' : styles.contextPanelCollapsed].filter(Boolean).join(' ')}>
           <section className={styles.versionPanel}>
             <div className={styles.panelHeader}>
-              <h2>版本记录</h2>
-              <span>{selectedDocument?.docType === 'DOC' ? `${versions.length} 条` : '仅文档节点可用'}</span>
+              <div>
+                <div className={styles.versionEyebrow}>右侧抽屉</div>
+                <h2>查看版本</h2>
+                <span>{selectedDocument?.docType === 'DOC' ? `${versions.length} 个版本` : '仅文档节点可用'}</span>
+              </div>
+              <button type="button" className={styles.versionCloseButton} onClick={() => setContextPanelCollapsed(true)}>
+                收起
+              </button>
             </div>
             {selectedDocument?.docType === 'DOC' ? (
               <>
-                <div className={styles.versionList}>
-                  {versionsLoading ? (
-                    <div className={styles.emptyVersion}>正在加载版本记录...</div>
-                  ) : versions.length > 0 ? (
-                    versions.map((version) => (
-                      <article key={version.id} className={styles.versionItem}>
-                        <div className={styles.versionTop}>
-                          <div>
-                            <strong>v{version.version}</strong>
-                            <span className={styles.versionTime}>{dayjs(version.createdAt).format('MM-DD HH:mm')}</span>
-                          </div>
-                          <div className={styles.versionActions}>
-                            <button
-                              type="button"
-                              className={styles.toolButton}
-                              onClick={() => setComparingVersionId((current) => (current === version.id ? null : version.id))}
-                            >
-                              {comparingVersionId === version.id ? '关闭对比' : '查看对比'}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.toolButton}
-                              disabled={rollingBackVersionId === version.id || !canWriteKnowledgeBase}
-                              onClick={() => handleRollbackVersion(version.id)}
-                            >
-                              {rollingBackVersionId === version.id ? '回滚中...' : '回滚'}
-                            </button>
-                          </div>
-                        </div>
-                        <p className={styles.versionRemark}>{version.remark || '自动快照'}</p>
-                        <div className={styles.versionMeta}>
-                          <span>{version.format}</span>
-                          <span>{version.sourceType}</span>
-                          <span>操作人 {version.userId}</span>
-                        </div>
-                        <div className={styles.versionPreview}>
-                          {version.contentText || version.content || '当前版本未记录正文摘要。'}
-                        </div>
-                      </article>
-                    ))
-                  ) : (
-                    <div className={styles.emptyVersion}>当前文档还没有可展示的历史版本。</div>
-                  )}
-                </div>
+                <DocumentVersionList
+                  versions={versions}
+                  loading={versionsLoading}
+                  comparingVersionId={comparingVersionId}
+                  rollingBackVersionId={rollingBackVersionId}
+                  canRollback={canWriteKnowledgeBase}
+                  onToggleCompare={(versionId) => setComparingVersionId((current) => (current === versionId ? null : versionId))}
+                  onRollback={handleRollbackVersion}
+                />
                 {comparingVersion && (
-                  <div className={styles.diffPanel}>
-                    <div className={styles.panelHeader}>
-                      <h2>版本对比</h2>
-                      <span>当前版本 v{selectedDocument.versionNo} vs 历史版本 v{comparingVersion.version}</span>
-                    </div>
-                    <div className={styles.diffLegend}>
-                      <span className={styles.sameLegend}>未变化</span>
-                      <span className={styles.addedLegend}>历史版本新增</span>
-                      <span className={styles.removedLegend}>当前版本新增</span>
-                    </div>
-                    <div className={styles.diffTable}>
-                      <div className={styles.diffHeader}>
-                        <span>当前版本</span>
-                        <span>历史版本</span>
-                      </div>
-                      {versionDiffRows.length > 0 ? (
-                        versionDiffRows.map((row, index) => (
-                          <div key={`${row.type}-${index}`} className={styles.diffRow}>
-                            <div className={`${styles.diffCell} ${styles[`diff${row.type}`]}`}>
-                              {row.currentLine || <span className={styles.emptyLine}>∅</span>}
-                            </div>
-                            <div className={`${styles.diffCell} ${styles[`diff${row.type}`]}`}>
-                              {row.targetLine || <span className={styles.emptyLine}>∅</span>}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className={styles.emptyVersion}>当前版本和历史版本内容一致。</div>
-                      )}
-                    </div>
-                  </div>
+                  <DocumentVersionDiff
+                    title="查看差异"
+                    subtitle={`当前版本 v${selectedDocument.versionNo} vs 历史版本 v${comparingVersion.version}`}
+                    rows={versionDiffRows}
+                  />
                 )}
               </>
-            ) : (
-              <div className={styles.emptyVersion}>选中文档节点后，可在这里查看版本和对比结果。</div>
-            )}
+            ) : null}
           </section>
 
-          <section className={styles.syncPanel}>
-            <div className={styles.panelHeader}>
-              <h2>同步任务</h2>
-              <span>{syncJobs.length} 条记录</span>
-            </div>
-            <div className={styles.syncList}>
-              {syncJobs.map((job) => (
-                <article key={job.id} className={styles.syncItem}>
-                  <div className={styles.syncTop}>
-                    <strong>{job.status}</strong>
-                    <span>{dayjs(job.createdAt).format('MM-DD HH:mm')}</span>
-                  </div>
-                  <p className={styles.syncMessage}>{job.message}</p>
-                  <div className={styles.syncMeta}>
-                    <span>{job.localPath}</span>
-                    <span>扫描 {job.scannedCount}</span>
-                    <span>变更 {job.changedCount}</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
+          <details className={styles.syncDisclosure}>
+            <summary className={styles.syncDisclosureSummary}>
+              <div className={styles.syncSummaryMain}>
+                <div className={styles.syncSummaryEyebrow}>低频信息</div>
+                <strong className={styles.syncSummaryTitle}>同步记录</strong>
+                <span className={styles.syncSummaryMeta}>{syncJobs.length} 条记录</span>
+              </div>
+              <span className={styles.syncSummaryHint}>按需查看</span>
+            </summary>
+            <section className={styles.syncPanel}>
+              <div className={styles.syncList}>
+                {syncJobs.length > 0 ? (
+                  syncJobs.map((job) => (
+                    <article key={job.id} className={styles.syncItem}>
+                      <div className={styles.syncTop}>
+                        <strong className={styles.syncStatusBadge}>{job.status}</strong>
+                        <span>{dayjs(job.createdAt).format('MM-DD HH:mm')}</span>
+                      </div>
+                      <p className={styles.syncMessage}>{job.message}</p>
+                      <div className={styles.syncMeta}>
+                        <span className={styles.syncPath}>{job.localPath}</span>
+                        <span className="ui-chip">扫描 {job.scannedCount}</span>
+                        <span className="ui-chip">变更 {job.changedCount}</span>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className={styles.emptyVersion}>当前还没有同步记录。</div>
+                )}
+              </div>
+            </section>
+          </details>
         </aside>
       </section>
 

@@ -83,8 +83,11 @@ const KnowledgeBaseFormModal = ({
       <div className={styles.modal}>
         <div className={styles.header}>
           <div>
-            <p className={styles.eyebrow}>{mode === 'create' ? 'Create Knowledge Base' : 'Update Knowledge Base'}</p>
-            <h2 className={styles.title}>{mode === 'create' ? '新建知识库' : '编辑知识库'}</h2>
+            <p className={styles.eyebrow}>知识库工作区</p>
+            <h2 className={styles.title}>{mode === 'create' ? '新建知识库' : '知识库设置'}</h2>
+            <p className={styles.description}>
+              {mode === 'create' ? '先填写名称，创建后直接进入知识库继续新建文档。' : '调整名称、说明和同步方式。'}
+            </p>
           </div>
           <button type="button" className={styles.closeButton} onClick={onClose}>
             关闭
@@ -172,7 +175,7 @@ const KnowledgeBaseFormModal = ({
               取消
             </button>
             <button type="submit" className={styles.primaryButton} disabled={submitting}>
-              {submitting ? '提交中...' : mode === 'create' ? '创建知识库' : '保存变更'}
+              {submitting ? '提交中...' : mode === 'create' ? '新建知识库' : '保存设置'}
             </button>
           </div>
         </form>

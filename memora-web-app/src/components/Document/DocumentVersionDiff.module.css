@@ -1,0 +1,120 @@
+.panel {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 16px;
+  background: rgba(247, 248, 250, 0.9);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header h2 {
+  font-size: 18px;
+}
+
+.header span {
+  color: #8f959e;
+  font-size: 12px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.sameLegend,
+.addedLegend,
+.removedLegend {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sameLegend {
+  background: rgba(148, 163, 184, 0.16);
+  color: #475569;
+}
+
+.addedLegend {
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
+}
+
+.removedLegend {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.table {
+  margin-top: 14px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.tableHeader,
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.tableHeader {
+  background: rgba(255, 255, 255, 0.82);
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tableHeader span,
+.cell {
+  padding: 12px 14px;
+}
+
+.row + .row {
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.cell {
+  min-height: 48px;
+  white-space: pre-wrap;
+  line-height: 1.7;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.cellsame {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.celladded {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.cellremoved {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.emptyLine {
+  color: #94a3b8;
+}
+
+.emptyState {
+  padding: 16px;
+  background: rgba(247, 248, 250, 0.92);
+  color: #7c6f64;
+}
+
+@media (max-width: 860px) {
+  .tableHeader,
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

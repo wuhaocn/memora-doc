@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import styles from './DocumentShareDrawer.module.css'
 
 const copyText = async (text) => {
@@ -29,8 +29,14 @@ const DocumentShareDrawer = ({
     if (!documentId) {
       return ''
     }
-    return `${window.location.origin}/docs/${documentId}`
+    return `${window.location.origin}/docs/${documentId}?share=1`
   }, [documentId])
+
+  useEffect(() => {
+    if (open) {
+      setCopied(false)
+    }
+  }, [open])
 
   if (!open) {
     return null
@@ -51,8 +57,8 @@ const DocumentShareDrawer = ({
       <div className={styles.drawer}>
         <div className={styles.header}>
           <div>
-            <p className={styles.eyebrow}>Document Share</p>
-            <h2 className={styles.title}>分享文档</h2>
+            <p className={styles.eyebrow}>分享文档</p>
+            <h2 className={styles.title}>复制分享链接</h2>
             <p className={styles.description}>{title}</p>
           </div>
           <button type="button" className={styles.closeButton} onClick={onClose}>
@@ -61,25 +67,25 @@ const DocumentShareDrawer = ({
         </div>
 
         <div className={styles.section}>
-          <div className={styles.label}>访问方式</div>
+          <div className={styles.label}>分享范围</div>
           <div className={styles.scopeCard}>
-            <strong>租户内阅读链接</strong>
-            <p>已登录并具备当前知识库访问权限的成员，可直接通过该链接打开文档阅读页。</p>
+            <strong>租户内只读</strong>
+            <p>已登录并具备当前知识库访问权限的成员，可直接通过链接阅读文档，不展示编辑入口。</p>
           </div>
         </div>
 
         <div className={styles.section}>
-          <div className={styles.label}>文档链接</div>
+          <div className={styles.label}>分享链接</div>
           <div className={styles.linkRow}>
             <input readOnly value={documentLink} className={styles.linkInput} />
             <button type="button" className={styles.primaryButton} onClick={handleCopyLink}>
-              {copied ? '已复制' : '复制链接'}
+              {copied ? '已复制' : '复制分享链接'}
             </button>
           </div>
         </div>
 
         <div className={styles.note}>
-          当前版本先收敛为“租户内分享”。匿名公开分享还未打通，避免产生错误预期。
+          分享后，对方会直接打开只读阅读页。公开匿名分享后续再补。
         </div>
       </div>
     </div>

@@ -1,59 +1,76 @@
 .diagramWrapper {
-  margin: var(--spacing-lg) 0;
+  margin: 18px 0;
   position: relative;
 }
 
 .diagramContainer {
-  border: 2px solid var(--color-border);
-  border-radius: var(--border-radius-lg);
-  background-color: var(--color-bg-white);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--workspace-card-radius);
+  background-color: #ffffff;
   overflow: hidden;
-  transition: all var(--transition-base);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .diagramContainer:hover {
-  border-color: var(--color-primary-light);
-  box-shadow: var(--shadow-md);
+  border-color: rgba(51, 112, 255, 0.18);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
 }
 
 .diagramToolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--color-bg);
-  border-bottom: 1px solid var(--color-border-light);
+  padding: 10px 12px;
+  background-color: rgba(247, 248, 250, 0.92);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .diagramLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: var(--type-eyebrow);
+  font-weight: 700;
+  color: #245bdb;
 }
 
 .diagramActions {
   display: flex;
-  gap: var(--spacing-xs);
+  gap: 8px;
   position: relative;
   z-index: 10;
 }
 
 .diagramContent {
-  padding: var(--spacing-md);
+  padding: 16px;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 200px;
-  background-color: var(--color-bg-white);
+  background-color: #ffffff;
   overflow: auto;
 }
 
 .editModal :global(.arco-modal-body) {
-  padding: var(--spacing-lg);
+  padding: 20px;
   max-height: calc(90vh - 120px);
   overflow: auto;
+}
+
+.editModal :global(.arco-modal-header) {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.editModal :global(.arco-modal-footer) {
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.editModal :global(.arco-btn-primary) {
+  background: var(--button-primary-bg);
+  border-color: transparent;
+}
+
+.editModal :global(.arco-btn-secondary) {
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  border-color: transparent;
 }
 
 .editForm {
@@ -61,61 +78,62 @@
 }
 
 .formItem {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 18px;
 }
 
 .formItem label {
   display: block;
-  margin-bottom: var(--spacing-sm);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text);
+  margin-bottom: 8px;
+  font-size: var(--type-body-sm);
+  font-weight: 600;
+  color: #1f2329;
 }
 
 .editContainer {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-lg);
+  gap: 18px;
   min-height: 500px;
-  margin-top: var(--spacing-md);
+  margin-top: 16px;
 }
 
 .editPanel {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--border-radius);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--workspace-card-radius);
   overflow: hidden;
+  background: #ffffff;
 }
 
 .previewPanel {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--border-radius);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--workspace-card-radius);
   overflow: hidden;
-  background-color: var(--color-bg);
+  background-color: rgba(247, 248, 250, 0.92);
 }
 
 .panelHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--color-bg);
-  border-bottom: 1px solid var(--color-border-light);
+  padding: 10px 12px;
+  background-color: rgba(247, 248, 250, 0.92);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .panelHeader label {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--type-body-sm);
   font-weight: 600;
-  color: var(--color-text);
+  color: #1f2329;
 }
 
 .helpLink {
   font-size: 12px;
-  color: var(--color-primary);
+  color: #245bdb;
   text-decoration: none;
 }
 
@@ -137,7 +155,7 @@
 
 .previewContent {
   flex: 1;
-  padding: var(--spacing-md);
+  padding: 16px;
   overflow: auto;
   min-height: 400px;
   display: flex;
@@ -148,18 +166,18 @@
 .formRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-lg);
+  gap: 16px;
+  margin-top: 18px;
 }
 
 .helpText {
-  margin-top: var(--spacing-xs);
+  margin-top: 6px;
   font-size: 12px;
-  color: var(--color-text-secondary);
+  color: #646a73;
 }
 
 .helpText a {
-  color: var(--color-primary);
+  color: #245bdb;
   text-decoration: none;
 }
 
@@ -172,9 +190,8 @@
     grid-template-columns: 1fr;
     min-height: auto;
   }
-  
+
   .previewContent {
     min-height: 300px;
   }
 }
-

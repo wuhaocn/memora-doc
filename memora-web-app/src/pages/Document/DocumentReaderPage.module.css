@@ -1,11 +1,12 @@
 .page {
   min-height: 100vh;
-  padding: 18px 22px 24px;
-  background:
-    radial-gradient(circle at top left, rgba(191, 219, 254, 0.36), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(253, 230, 138, 0.22), transparent 26%),
-    #f5f3ec;
-  color: #14213d;
+  padding: var(--workspace-page-padding);
+  background: #f5f7fa;
+  color: #1f2329;
+}
+
+.pageScrolled {
+  padding-top: 10px;
 }
 
 .state {
@@ -23,7 +24,7 @@
 }
 
 .stateCard h1 {
-  font-size: 28px;
+  font-size: var(--type-title-state);
   line-height: 1.15;
 }
 
@@ -44,95 +45,167 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 14px 18px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.05);
+  gap: 12px;
+  position: sticky;
+  top: calc(var(--header-height) + 12px);
+  z-index: 12;
+  padding: 8px 10px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  backdrop-filter: blur(18px);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: none;
+  transition: padding 160ms ease, top 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
 
-.main {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  min-width: 0;
-}
-
-.documentIdentity {
-  min-width: 0;
-}
-
-.eyebrow {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #9a3412;
+.topbarScrolled {
+  top: calc(var(--header-height) + 8px);
+  padding: 8px 10px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
 }
 
 .backButton,
 .primaryButton,
 .secondaryButton {
-  padding: 10px 14px;
-  border-radius: 14px;
+  padding: var(--button-padding-md);
+  border-radius: var(--button-radius-lg);
   font-weight: 700;
+  transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
 }
 
 .backButton,
 .secondaryButton {
-  background: rgba(23, 50, 77, 0.08);
-  color: #17324d;
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
 }
 
 .primaryButton {
-  color: #fffdf4;
-  background: linear-gradient(135deg, #17324d, #b45309);
-  box-shadow: 0 10px 24px rgba(180, 83, 9, 0.18);
+  color: var(--button-primary-text);
+  background: var(--button-primary-bg);
+  box-shadow: none;
+}
+
+.backButton:hover,
+.secondaryButton:hover {
+  background: var(--button-secondary-bg-hover);
+}
+
+.backButton:active,
+.secondaryButton:active,
+.primaryButton:active {
+  transform: translateY(1px);
+}
+
+.backButton:active,
+.secondaryButton:active {
+  background: var(--button-secondary-bg-active);
+}
+
+.primaryButton:hover {
+  background: var(--button-primary-bg-hover);
+}
+
+.primaryButton:active {
+  background: var(--button-primary-bg-active);
 }
 
 .title {
-  margin-top: 8px;
-  font-size: clamp(24px, 2.6vw, 32px);
+  font-size: var(--type-title-document);
   line-height: 1.08;
-}
-
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.metaPill {
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(23, 50, 77, 0.06);
-  color: #7c6f64;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.topbarActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
-  align-items: center;
+  transition: font-size 160ms ease;
 }
 
 .content {
-  margin-top: 18px;
+  margin-top: 14px;
+}
+
+.readerCard {
+  padding: 6px 0 0;
+  background: transparent;
+}
+
+.documentHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 4px;
+}
+
+.documentHeading {
+  min-width: 0;
+}
+
+.eyebrow {
+  font-size: var(--type-eyebrow);
+  font-weight: 700;
+  color: #245bdb;
+}
+
+.documentSubline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 10px;
+  color: #8f959e;
+  font-size: var(--type-eyebrow);
+}
+
+.documentToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.topbarScrolled .backButton,
+.documentHeader .primaryButton,
+.documentHeader .secondaryButton {
+  transition: padding 160ms ease, border-radius 160ms ease;
+}
+
+.topbarScrolled .backButton {
+  padding: var(--button-padding-compact);
+  border-radius: var(--button-radius-md);
+}
+
+.pageScrolled .title {
+  font-size: var(--type-title-document-compact);
+}
+
+.pageScrolled .documentToolbar .primaryButton,
+.pageScrolled .documentToolbar .secondaryButton {
+  padding: var(--button-padding-compact);
+  border-radius: var(--button-radius-md);
+}
+
+.documentSummary {
+  max-width: 860px;
+  margin: 14px auto 0;
+  padding: 0 4px;
+  color: #6b7280;
+  line-height: 1.8;
+}
+
+.documentStage {
+  margin-top: 16px;
 }
 
 .preview,
 .richPreview {
-  min-height: calc(100vh - 180px);
-  padding: 28px 32px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  min-height: 560px;
+  padding: 44px 64px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  background: #ffffff;
   color: #1f2937;
   line-height: 1.85;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.05);
 }
 
 .preview {
@@ -140,8 +213,10 @@
 }
 
 .richPreviewBody {
-  max-width: 960px;
+  max-width: 780px;
   margin: 0 auto;
+  color: #1f2937;
+  line-height: 1.85;
 }
 
 .richPreviewBody :global(h1) {
@@ -169,15 +244,15 @@
 .richPreviewBody :global(blockquote) {
   margin: 16px 0;
   padding: 12px 16px;
-  border-left: 4px solid #b45309;
-  background: rgba(255, 251, 235, 0.8);
+  border-left: 4px solid #3370ff;
+  background: rgba(51, 112, 255, 0.08);
   color: #6b7280;
 }
 
 .richPreviewBody :global(pre) {
   margin: 16px 0;
   padding: 16px 18px;
-  border-radius: 18px;
+  border-radius: 14px;
   background: #14213d;
   color: #f8fafc;
   overflow-x: auto;
@@ -186,12 +261,12 @@
 .richPreviewBody :global(code) {
   padding: 2px 6px;
   border-radius: 8px;
-  background: rgba(23, 50, 77, 0.08);
+  background: rgba(51, 112, 255, 0.08);
 }
 
 .richPreviewBody :global(img) {
   max-width: 100%;
-  border-radius: 18px;
+  border-radius: 14px;
 }
 
 @media (max-width: 860px) {
@@ -199,14 +274,20 @@
     padding: 14px;
   }
 
-  .topbar,
-  .main {
+  .topbar {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .topbarActions {
-    width: 100%;
+  .readerCard {
+    padding: 0;
+  }
+
+  .documentHeader {
+    flex-direction: column;
+  }
+
+  .documentToolbar {
     justify-content: flex-start;
   }
 

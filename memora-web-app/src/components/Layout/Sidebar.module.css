@@ -1,22 +1,23 @@
 .sidebar {
-  width: 320px;
-  padding: 24px 18px 18px;
+  width: 288px;
+  padding: 20px 14px 14px;
   border-right: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(255, 251, 245, 0.78);
+  background: rgba(248, 249, 252, 0.88);
   backdrop-filter: blur(14px);
   transition: width 0.25s ease;
 }
 
 .collapsed {
-  width: 96px;
+  width: 84px;
 }
 
 .panel {
-  padding: 16px 18px;
-  border-radius: 24px;
-  color: #fffdf4;
-  background: linear-gradient(160deg, #17324d, #283618 60%, #b45309);
-  box-shadow: 0 18px 34px rgba(23, 50, 77, 0.18);
+  padding: 12px 14px;
+  border: 1px solid rgba(51, 112, 255, 0.12);
+  border-radius: 14px;
+  color: #245bdb;
+  background: linear-gradient(180deg, rgba(232, 240, 255, 0.92), rgba(245, 248, 255, 0.96));
+  box-shadow: none;
 }
 
 .panelTitle {
@@ -27,52 +28,67 @@
 
 .sectionTitle {
   margin: 24px 8px 10px;
-  font-size: 12px;
-  color: #9a8f85;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-size: var(--type-eyebrow);
+  color: #8f959e;
+  font-weight: 700;
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
 }
 
 .listToggle {
   width: 100%;
   margin-top: 12px;
-  padding: 10px 14px;
-  border-radius: 16px;
-  background: rgba(23, 50, 77, 0.08);
-  color: #17324d;
+  padding: var(--button-padding-md);
+  border-radius: var(--button-radius-lg);
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
   font-weight: 700;
   text-align: left;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.listToggle:hover {
+  background: var(--button-secondary-bg-hover);
+}
+
+.listToggle:active {
+  background: var(--button-secondary-bg-active);
+  transform: translateY(1px);
 }
 
 .item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.65);
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: transparent;
   border: 1px solid transparent;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.item:hover {
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .active {
-  border-color: rgba(180, 83, 9, 0.22);
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+  border-color: rgba(51, 112, 255, 0.16);
+  background: rgba(51, 112, 255, 0.06);
+  box-shadow: none;
 }
 
 .itemIcon {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
-  border-radius: 14px;
-  background: rgba(252, 211, 77, 0.2);
-  color: #92400e;
+  border-radius: 12px;
+  background: rgba(51, 112, 255, 0.1);
+  color: #245bdb;
 }
 
 .itemContent {
@@ -82,7 +98,7 @@
 .itemTitle {
   font-size: 14px;
   font-weight: 700;
-  color: #14213d;
+  color: #1f2329;
 }
 
 .collapsed .sectionTitle,

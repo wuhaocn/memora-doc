@@ -2,6 +2,8 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react
 import { useNavigate, useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 import DocumentShareDrawer from '../../components/Document/DocumentShareDrawer'
+import DocumentVersionDiff from '../../components/Document/DocumentVersionDiff'
+import DocumentVersionList from '../../components/Document/DocumentVersionList'
 import { documentApi } from '../../services/api/documentApi'
 import { buildLineDiff } from '../../utils/documentDiff'
 import { summarizePlainText } from '../../utils/documentContent'
@@ -20,6 +22,7 @@ const PAGE_STATUS = {
 const DocumentEditorPage = () => {
   const { documentId } = useParams()
   const navigate = useNavigate()
+  const [scrolled, setScrolled] = useState(false)
   const [pageStatus, setPageStatus] = useState(PAGE_STATUS.LOADING)
   const [pageErrorMessage, setPageErrorMessage] = useState('')
   const [document, setDocument] = useState(null)
@@ -102,6 +105,16 @@ const DocumentEditorPage = () => {
       loadVersions()
     }
   }, [loadVersions, pageStatus])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 24)
+    }
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const comparingVersion = useMemo(() => {
     return versions.find((version) => version.id === comparingVersionId) || null
@@ -200,151 +213,104 @@ const DocumentEditorPage = () => {
   }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.topbar}>
-        <div className={styles.topbarMain}>
-          <button type="button" className={styles.backButton} onClick={backToKnowledgeBase}>
-            返回文档列表
-          </button>
-          <div className={styles.documentIdentity}>
-            <div className={styles.eyebrow}>文档编辑</div>
-            <h1 className={styles.title}>{document.title}</h1>
-            <div className={styles.meta}>
-              <span className={styles.metaPill}>v{document.versionNo}</span>
-              <span className={styles.metaPill}>{saving ? '保存中…' : '已进入编辑'}</span>
-              <span className={styles.metaPill}>更新于 {dayjs(document.updatedAt).format('MM-DD HH:mm')}</span>
+    <div className={`${styles.page} ${scrolled ? styles.pageScrolled : ''}`}>
+      <div className={`${styles.pageShell} ${versionsOpen ? styles.pageShellWide : ''}`}>
+        <header className={`${styles.topbar} ${scrolled ? styles.topbarScrolled : ''}`}>
+          <div className={styles.topbarMain}>
+            <button type="button" className={styles.backButton} onClick={backToKnowledgeBase}>
+              返回知识库
+            </button>
+            <div className={styles.documentIdentity}>
+              <div className={styles.eyebrow}>文档编辑</div>
+              <h1 className={styles.title}>{document.title}</h1>
+              <div className={styles.meta}>
+                <span className={styles.metaPill}>v{document.versionNo}</span>
+                <span className={styles.metaPill}>{saving ? '保存中…' : '已进入编辑'}</span>
+                <span className={styles.metaPill}>更新于 {dayjs(document.updatedAt).format('MM-DD HH:mm')}</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div className={styles.topbarActions}>
-          <button
-            type="button"
-            className={styles.secondaryButton}
-            onClick={() => navigate(`/docs/${document.id}`)}
-          >
-            阅读文档
-          </button>
-          <button
-            type="button"
-            className={styles.secondaryButton}
-            onClick={() => setShareOpen(true)}
-          >
-            分享文档
-          </button>
-          <button
-            type="button"
-            className={styles.primaryButton}
-            onClick={() => setVersionsOpen((current) => !current)}
-          >
-            {versionsOpen ? '收起版本' : '查看版本'}
-          </button>
-        </div>
-      </header>
+          <div className={styles.topbarActions}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => navigate(`/docs/${document.id}`)}
+            >
+              阅读文档
+            </button>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => setShareOpen(true)}
+            >
+              分享文档
+            </button>
+            <button
+              type="button"
+              className={styles.ghostButton}
+              onClick={() => setVersionsOpen(true)}
+            >
+              查看版本
+            </button>
+          </div>
+        </header>
 
-      {feedback && (
-        <div className={`${styles.feedback} ${feedback.type === 'error' ? styles.feedbackError : styles.feedbackSuccess}`}>
-          {feedback.message}
-        </div>
-      )}
-
-      <section className={`${styles.workspace} ${versionsOpen ? styles.workspaceWithDrawer : ''}`}>
-        <div className={styles.editorPanel}>
-          <Suspense fallback={<div className={styles.editorLoading}>正在加载编辑器...</div>}>
-            <DocumentRichEditor
-              focusMode
-              initialContent={document.content || document.contentText || ''}
-              placeholder="开始编写文档正文..."
-              saving={saving}
-              onCancel={backToKnowledgeBase}
-              onSave={handleSave}
-            />
-          </Suspense>
-        </div>
-
-        {versionsOpen && (
-          <aside className={styles.versionDrawer}>
-            <div className={styles.versionHeader}>
-              <div>
-                <h2>版本记录</h2>
-                <span>{versions.length} 条</span>
-              </div>
-              <button type="button" className={styles.ghostButton} onClick={() => setVersionsOpen(false)}>
-                关闭
-              </button>
-            </div>
-            <div className={styles.versionList}>
-              {versionsLoading ? (
-                <div className={styles.emptyVersion}>正在加载版本记录...</div>
-              ) : versions.length > 0 ? (
-                versions.map((version) => (
-                  <article key={version.id} className={styles.versionItem}>
-                    <div className={styles.versionTop}>
-                      <div>
-                        <strong>v{version.version}</strong>
-                        <span className={styles.versionTime}>{dayjs(version.createdAt).format('MM-DD HH:mm')}</span>
-                      </div>
-                      <div className={styles.versionActions}>
-                        <button
-                          type="button"
-                          className={styles.ghostButton}
-                          onClick={() => setComparingVersionId((current) => (current === version.id ? null : version.id))}
-                        >
-                          {comparingVersionId === version.id ? '关闭对比' : '查看对比'}
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.ghostButton}
-                          disabled={rollingBackVersionId === version.id}
-                          onClick={() => handleRollbackVersion(version.id)}
-                        >
-                          {rollingBackVersionId === version.id ? '回滚中...' : '回滚'}
-                        </button>
-                      </div>
-                    </div>
-                    <p className={styles.versionRemark}>{version.remark || '自动快照'}</p>
-                    <div className={styles.versionPreview}>
-                      {version.contentText || version.content || '当前版本未记录正文摘要。'}
-                    </div>
-                  </article>
-                ))
-              ) : (
-                <div className={styles.emptyVersion}>当前文档还没有可展示的历史版本。</div>
-              )}
-            </div>
-
-            {comparingVersion && (
-              <div className={styles.diffPanel}>
-                <div className={styles.versionHeader}>
-                  <div>
-                    <h2>版本对比</h2>
-                    <span>当前版本 v{document.versionNo} vs 历史版本 v{comparingVersion.version}</span>
-                  </div>
-                </div>
-                <div className={styles.diffTable}>
-                  <div className={styles.diffHeader}>
-                    <span>当前版本</span>
-                    <span>历史版本</span>
-                  </div>
-                  {versionDiffRows.length > 0 ? (
-                    versionDiffRows.map((row, index) => (
-                      <div key={`${row.type}-${index}`} className={styles.diffRow}>
-                        <div className={`${styles.diffCell} ${styles[`diff${row.type}`]}`}>
-                          {row.currentLine || <span className={styles.emptyLine}>∅</span>}
-                        </div>
-                        <div className={`${styles.diffCell} ${styles[`diff${row.type}`]}`}>
-                          {row.targetLine || <span className={styles.emptyLine}>∅</span>}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className={styles.emptyVersion}>当前版本和历史版本内容一致。</div>
-                  )}
-                </div>
-              </div>
-            )}
-          </aside>
+        {feedback && (
+          <div className={`${styles.feedback} ${feedback.type === 'error' ? styles.feedbackError : styles.feedbackSuccess}`}>
+            {feedback.message}
+          </div>
         )}
-      </section>
+
+        <div className={styles.workspaceHint}>
+          {versionsOpen ? '右侧正在显示历史版本，写作过程不受影响。' : '先继续写作，需要时再展开版本记录。'}
+        </div>
+
+        <section className={`${styles.workspace} ${versionsOpen ? styles.workspaceWithDrawer : ''}`}>
+          <div className={styles.editorPanel}>
+            <Suspense fallback={<div className={styles.editorLoading}>正在加载编辑器...</div>}>
+              <DocumentRichEditor
+                focusMode
+                initialContent={document.content || document.contentText || ''}
+                placeholder="开始编写文档正文..."
+                saving={saving}
+                onCancel={backToKnowledgeBase}
+                onSave={handleSave}
+              />
+            </Suspense>
+          </div>
+
+          {versionsOpen && (
+            <aside className={styles.versionDrawer}>
+              <div className={styles.versionHeader}>
+                <div>
+                  <div className={styles.versionEyebrow}>右侧抽屉</div>
+                  <h2>查看版本</h2>
+                  <span>{versions.length} 个版本</span>
+                </div>
+                <button type="button" className={styles.versionCloseButton} onClick={() => setVersionsOpen(false)}>
+                  收起
+                </button>
+              </div>
+              <DocumentVersionList
+                versions={versions}
+                loading={versionsLoading}
+                comparingVersionId={comparingVersionId}
+                rollingBackVersionId={rollingBackVersionId}
+                onToggleCompare={(versionId) => setComparingVersionId((current) => (current === versionId ? null : versionId))}
+                onRollback={handleRollbackVersion}
+              />
+
+              {comparingVersion && (
+                <DocumentVersionDiff
+                  title="查看差异"
+                  subtitle={`当前版本 v${document.versionNo} vs 历史版本 v${comparingVersion.version}`}
+                  rows={versionDiffRows}
+                />
+              )}
+            </aside>
+          )}
+        </section>
+      </div>
 
       <DocumentShareDrawer
         open={shareOpen}
