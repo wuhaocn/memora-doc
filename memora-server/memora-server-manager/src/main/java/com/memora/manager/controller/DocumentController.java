@@ -7,7 +7,6 @@ import com.memora.manager.dto.DocumentBatchMoveDTO;
 import com.memora.manager.dto.DocumentCreateDTO;
 import com.memora.manager.dto.DocumentSortDTO;
 import com.memora.manager.dto.DocumentUpdateDTO;
-import com.memora.manager.dto.SearchRequestDTO;
 import com.memora.manager.entity.DocumentVersion;
 import com.memora.manager.service.DocumentService;
 import com.memora.manager.vo.DocumentVO;
@@ -98,13 +97,5 @@ public class DocumentController {
     @PostMapping("/{id}/rollback/{versionId}")
     public Result<DocumentVO> rollbackToVersion(@PathVariable Long id, @PathVariable Long versionId) {
         return Result.success(documentService.rollbackToVersion(id, versionId));
-    }
-
-    @PostMapping("/search")
-    public Result<IPage<DocumentVO>> advancedSearch(
-        @RequestParam(defaultValue = "1") Integer page,
-        @RequestParam(defaultValue = "20") Integer size,
-        @RequestBody SearchRequestDTO searchRequest) {
-        return Result.success(documentService.advancedSearch(page, size, searchRequest));
     }
 }

@@ -1,0 +1,74 @@
+{
+  "projections": [
+    {
+      "source": "agent-skills-coder",
+      "target": ".codex/skills/agent-skills-coder",
+      "kind": "dir"
+    },
+    {
+      "source": "agent-skills-coder",
+      "target": ".claude/skills/agent-skills-coder",
+      "kind": "dir"
+    },
+    {
+      "source": "agent-skills-coder",
+      "target": ".cursor/skills/agent-skills-coder",
+      "kind": "dir"
+    },
+    {
+      "source": "agent-skills-coder",
+      "target": "~/.codex/skills/agent-skills-coder",
+      "kind": "dir"
+    },
+    {
+      "source": "agent-skills-coder",
+      "target": "~/.claude/skills/agent-skills-coder",
+      "kind": "dir"
+    },
+    {
+      "source": "agent-skills-coder",
+      "target": "~/.cursor/skills/agent-skills-coder",
+      "kind": "dir"
+    },
+    {
+      "source": "openspec-workflow",
+      "target": ".codex/skills/openspec-workflow",
+      "kind": "dir"
+    },
+    {
+      "source": "openspec-workflow",
+      "target": ".claude/skills/openspec-workflow",
+      "kind": "dir"
+    },
+    {
+      "source": "openspec-workflow",
+      "target": ".cursor/skills/openspec-workflow",
+      "kind": "dir"
+    },
+    {
+      "source": "openspec-workflow",
+      "target": "~/.codex/skills/openspec-workflow",
+      "kind": "dir"
+    },
+    {
+      "source": "openspec-workflow",
+      "target": "~/.claude/skills/openspec-workflow",
+      "kind": "dir"
+    },
+    {
+      "source": "openspec-workflow",
+      "target": "~/.cursor/skills/openspec-workflow",
+      "kind": "dir"
+    },
+    {
+      "source": "openspec-workflow/claude/commands/opsx",
+      "target": ".claude/commands/opsx",
+      "kind": "dir"
+    },
+    {
+      "source": "openspec-workflow/claude/commands/opsx",
+      "target": "~/.claude/commands/opsx",
+      "kind": "dir"
+    }
+  ]
+}

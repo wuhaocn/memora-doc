@@ -2,7 +2,6 @@ package com.memora.manager.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.memora.common.exception.BusinessException;
@@ -12,7 +11,6 @@ import com.memora.manager.dto.DocumentBatchMoveDTO;
 import com.memora.manager.dto.DocumentCreateDTO;
 import com.memora.manager.dto.DocumentSortDTO;
 import com.memora.manager.dto.DocumentUpdateDTO;
-import com.memora.manager.dto.SearchRequestDTO;
 import com.memora.manager.entity.Document;
 import com.memora.manager.entity.DocumentVersion;
 import com.memora.manager.entity.KnowledgeBase;
@@ -66,19 +64,15 @@ public class DocumentService extends ServiceImpl<DocumentMapper, Document> {
         document.setParentId(parent == null ? 0L : parent.getId());
         document.setPath(buildPath(parent, document.getSlug()));
         document.setDepth(parent == null ? 0 : parent.getDepth() + 1);
-        document.setSourceType(StringUtils.hasText(dto.getSourceType()) ? dto.getSourceType() : "MANUAL");
-        document.setSyncStatus("LOCAL_SYNC".equals(document.getSourceType()) ? "PENDING" : "MANUAL");
         document.setVersionNo(1);
         document.setSummary(resolveSummary(dto.getSummary(), dto.getContentText(), dto.getContent()));
         document.setStatus(1);
-        document.setIsPublic(dto.getIsPublic() == null ? 0 : dto.getIsPublic());
         document.setViewCount(0);
         document.setSortOrder(dto.getSortOrder() == null
             ? resolveNextSortOrder(knowledgeBase.getId(), parent == null ? 0L : parent.getId(), null)
             : dto.getSortOrder());
         document.setCreatedAt(LocalDateTime.now());
         document.setUpdatedAt(LocalDateTime.now());
-        document.setPublishedAt(LocalDateTime.now());
 
         this.save(document);
         refreshKnowledgeBaseDocumentCount(knowledgeBase.getId());
@@ -96,6 +90,14 @@ public class DocumentService extends ServiceImpl<DocumentMapper, Document> {
         validateParentChange(document, parent);
         validateDocTypeChange(document, dto.getDocType());
         String oldPath = document.getPath();
+        String oldTitle = document.getTitle();
+        String oldSlug = document.getSlug();
+        String oldDocType = document.getDocType();
+        String oldFormat = document.getFormat();
+        String oldContent = document.getContent();
+        String oldContentText = document.getContentText();
+        String oldSummary = document.getSummary();
+        Long oldParentId = document.getParentId();
         Long currentParentId = document.getParentId() == null ? 0L : document.getParentId();
         Long nextParentId = parent == null ? 0L : parent.getId();
 
@@ -128,16 +130,6 @@ public class DocumentService extends ServiceImpl<DocumentMapper, Document> {
         if (dto.getParentId() != null) {
             document.setParentId(nextParentId);
         }
-        if (dto.getSourceType() != null) {
-            document.setSourceType(dto.getSourceType());
-            document.setSyncStatus("LOCAL_SYNC".equals(dto.getSourceType()) ? "PENDING" : "MANUAL");
-        }
-        if (dto.getSourcePath() != null) {
-            document.setSourcePath(dto.getSourcePath());
-        }
-        if (dto.getIsPublic() != null) {
-            document.setIsPublic(dto.getIsPublic());
-        }
         if (dto.getSortOrder() != null) {
             document.setSortOrder(dto.getSortOrder());
         } else if (dto.getParentId() != null && !nextParentId.equals(currentParentId)) {
@@ -146,11 +138,21 @@ public class DocumentService extends ServiceImpl<DocumentMapper, Document> {
 
         document.setPath(buildPath(parent, document.getSlug()));
         document.setDepth(parent == null ? 0 : parent.getDepth() + 1);
+
+        boolean structureOrContentChanged = !Objects.equals(oldTitle, document.getTitle())
+            || !Objects.equals(oldSlug, document.getSlug())
+            || !Objects.equals(oldDocType, document.getDocType())
+            || !Objects.equals(oldFormat, document.getFormat())
+            || !Objects.equals(oldContent, document.getContent())
+            || !Objects.equals(oldContentText, document.getContentText())
+            || !Objects.equals(oldSummary, document.getSummary())
+            || !Objects.equals(oldParentId, document.getParentId())
+            || !Objects.equals(oldPath, document.getPath());
         document.setVersionNo((document.getVersionNo() == null ? 1 : document.getVersionNo()) + 1);
         document.setUpdatedAt(LocalDateTime.now());
 
         this.updateById(document);
-        if (!oldPath.equals(document.getPath())) {
+        if (structureOrContentChanged && !oldPath.equals(document.getPath())) {
             refreshDescendantPaths(document, oldPath);
         }
         refreshKnowledgeBaseDocumentCount(document.getKnowledgeBaseId());
@@ -167,7 +169,6 @@ public class DocumentService extends ServiceImpl<DocumentMapper, Document> {
         version.setFormat(document.getFormat());
         version.setContent(document.getContent());
         version.setContentText(document.getContentText());
-        version.setSourceType(document.getSourceType());
         version.setUserId(document.getUserId());
         version.setRemark(remark);
         version.setCreatedAt(LocalDateTime.now());
@@ -211,7 +212,6 @@ public class DocumentService extends ServiceImpl<DocumentMapper, Document> {
         document.setFormat(version.getFormat());
         document.setContent(version.getContent());
         document.setContentText(version.getContentText());
-        document.setSourceType(version.getSourceType());
         document.setSummary(resolveSummary(document.getSummary(), version.getContentText(), version.getContent()));
         document.setVersionNo((document.getVersionNo() == null ? 1 : document.getVersionNo()) + 1);
         document.setUpdatedAt(LocalDateTime.now());
@@ -310,59 +310,6 @@ public class DocumentService extends ServiceImpl<DocumentMapper, Document> {
         return voPage;
     }
 
-    public IPage<DocumentVO> advancedSearch(Integer page, Integer size, SearchRequestDTO searchRequest) {
-        tenantAccessService.requireTenantMember(currentAccessContext.getCurrentTenantId());
-        Page<Document> pageParam = new Page<>(page, size);
-        LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Document::getStatus, 1);
-        queryWrapper.eq(Document::getTenantId, currentAccessContext.getCurrentTenantId());
-
-        if (StringUtils.hasText(searchRequest.getKeyword())) {
-            queryWrapper.and(wrapper -> wrapper.like(Document::getTitle, searchRequest.getKeyword()).or().like(Document::getContentText, searchRequest.getKeyword()));
-        }
-        if (searchRequest.getKnowledgeBaseId() != null) {
-            KnowledgeBase knowledgeBase = getActiveKnowledgeBase(searchRequest.getKnowledgeBaseId());
-            tenantAccessService.requireKnowledgeBaseReadAccess(knowledgeBase);
-            queryWrapper.eq(Document::getKnowledgeBaseId, searchRequest.getKnowledgeBaseId());
-        }
-        if (searchRequest.getParentId() != null) {
-            if (searchRequest.getParentId() != 0) {
-                getActiveDocument(searchRequest.getParentId());
-            }
-            queryWrapper.eq(Document::getParentId, searchRequest.getParentId());
-        }
-        if (searchRequest.getUserId() != null) {
-            queryWrapper.eq(Document::getUserId, searchRequest.getUserId());
-        }
-        if (searchRequest.getStartCreatedAt() != null) {
-            queryWrapper.ge(Document::getCreatedAt, searchRequest.getStartCreatedAt());
-        }
-        if (searchRequest.getEndCreatedAt() != null) {
-            queryWrapper.le(Document::getCreatedAt, searchRequest.getEndCreatedAt());
-        }
-        if (searchRequest.getStartUpdatedAt() != null) {
-            queryWrapper.ge(Document::getUpdatedAt, searchRequest.getStartUpdatedAt());
-        }
-        if (searchRequest.getEndUpdatedAt() != null) {
-            queryWrapper.le(Document::getUpdatedAt, searchRequest.getEndUpdatedAt());
-        }
-
-        if (StringUtils.hasText(searchRequest.getOrderBy())) {
-            if ("asc".equalsIgnoreCase(searchRequest.getOrderDirection())) {
-                queryWrapper.orderByAsc(getOrderField(searchRequest.getOrderBy()));
-            } else {
-                queryWrapper.orderByDesc(getOrderField(searchRequest.getOrderBy()));
-            }
-        } else {
-            queryWrapper.orderByDesc(Document::getUpdatedAt);
-        }
-
-        IPage<Document> result = this.page(pageParam, queryWrapper);
-        IPage<DocumentVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
-        voPage.setRecords(result.getRecords().stream().map(this::convertToVO).collect(Collectors.toList()));
-        return voPage;
-    }
-
     public List<DocumentVO> listByKnowledgeBaseId(Long knowledgeBaseId, Long parentId) {
         KnowledgeBase knowledgeBase = getActiveKnowledgeBase(knowledgeBaseId);
         tenantAccessService.requireKnowledgeBaseReadAccess(knowledgeBase);
@@ -412,26 +359,6 @@ public class DocumentService extends ServiceImpl<DocumentMapper, Document> {
             this.updateById(document);
         }
         return Result.success();
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public int markLocalSyncDocumentsAsSynced(Long knowledgeBaseId) {
-        LambdaQueryWrapper<Document> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Document::getKnowledgeBaseId, knowledgeBaseId)
-            .eq(Document::getStatus, 1)
-            .eq(Document::getSourceType, "LOCAL_SYNC");
-
-        List<Document> documents = this.list(queryWrapper);
-        int changedCount = 0;
-        for (Document document : documents) {
-            if (!"SYNCED".equals(document.getSyncStatus())) {
-                changedCount++;
-            }
-            document.setSyncStatus("SYNCED");
-            document.setUpdatedAt(LocalDateTime.now());
-            this.updateById(document);
-        }
-        return changedCount;
     }
 
     public long countActiveDocumentsByKnowledgeBaseId(Long knowledgeBaseId) {
@@ -646,15 +573,6 @@ public class DocumentService extends ServiceImpl<DocumentMapper, Document> {
 
     private void refreshKnowledgeBaseDocumentCount(Long knowledgeBaseId) {
         knowledgeBaseMapper.updateDocumentCount(knowledgeBaseId, countActiveDocumentsByKnowledgeBaseId(knowledgeBaseId));
-    }
-
-    private SFunction<Document, ?> getOrderField(String orderBy) {
-        return switch (orderBy) {
-            case "createdAt" -> Document::getCreatedAt;
-            case "title" -> Document::getTitle;
-            case "viewCount" -> Document::getViewCount;
-            default -> Document::getUpdatedAt;
-        };
     }
 
     private DocumentVO convertToVO(Document document) {

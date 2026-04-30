@@ -22,8 +22,6 @@ public class DocumentVersionVO {
     private String content;
 
     private String contentText;
-
-    private String sourceType;
     
     private String remark;
     

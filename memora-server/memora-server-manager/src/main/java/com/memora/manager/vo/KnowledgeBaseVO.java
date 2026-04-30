@@ -24,16 +24,6 @@ public class KnowledgeBaseVO {
     
     private Integer status;
     
-    private Integer isPublic;
-
-    private String sourceType;
-
-    private Integer syncEnabled;
-
-    private String localRootPath;
-
-    private String syncStatus;
-    
     private Integer documentCount;
     
     private Integer viewCount;
@@ -47,8 +37,6 @@ public class KnowledgeBaseVO {
     private Boolean canManage;
 
     private Boolean permissionRestricted;
-
-    private LocalDateTime lastSyncAt;
     
     private LocalDateTime createdAt;
     

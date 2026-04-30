@@ -29,23 +29,11 @@ public class KnowledgeBase {
     
     private Integer status; // 1:正常 0:删除 2:归档
     
-    private Integer isPublic; // 0:私有 1:公开
-
-    private String sourceType;
-
-    private Integer syncEnabled;
-
-    private String localRootPath;
-
-    private String syncStatus;
-    
     private Integer documentCount;
     
     private Integer viewCount;
     
     private Integer sortOrder;
-
-    private LocalDateTime lastSyncAt;
     
     private LocalDateTime createdAt;
     

@@ -50,18 +50,4 @@ export const knowledgeBaseApi = {
   getDocumentTree: async (id) => {
     return httpClient.get(`/api/v1/knowledge-bases/${id}/document-tree`)
   },
-
-  getSyncJobs: async (id) => {
-    return httpClient.get(`/api/v1/knowledge-bases/${id}/sync-jobs`)
-  },
-
-  triggerSync: async (id) => {
-    return httpClient.post(`/api/v1/knowledge-bases/${id}/sync-jobs/trigger`)
-  },
-
-  getStats: async (tenantId, userId) => {
-    return httpClient.get('/api/v1/knowledge-bases/stats', {
-      params: { tenantId, userId },
-    })
-  },
 }

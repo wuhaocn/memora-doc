@@ -4,19 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.memora.common.exception.BusinessException;
 import com.memora.manager.entity.Document;
 import com.memora.manager.entity.KnowledgeBase;
-import com.memora.manager.entity.SyncJob;
 import com.memora.manager.entity.Tenant;
 import com.memora.manager.entity.TenantMember;
 import com.memora.manager.mapper.DocumentMapper;
 import com.memora.manager.mapper.KnowledgeBaseMapper;
-import com.memora.manager.mapper.SyncJobMapper;
 import com.memora.manager.mapper.TenantMapper;
 import com.memora.manager.mapper.TenantMemberMapper;
 import com.memora.manager.support.CurrentAccessContext;
 import com.memora.manager.support.TenantAccessService;
 import com.memora.manager.vo.KnowledgeBaseVO;
 import com.memora.manager.vo.DocumentVO;
-import com.memora.manager.vo.SyncJobVO;
 import com.memora.manager.vo.TenantMemberVO;
 import com.memora.manager.vo.WorkspaceDashboardVO;
 import com.memora.manager.vo.WorkspaceVO;
@@ -35,9 +32,7 @@ public class WorkspaceService {
     private final TenantMemberMapper tenantMemberMapper;
     private final KnowledgeBaseMapper knowledgeBaseMapper;
     private final DocumentMapper documentMapper;
-    private final SyncJobMapper syncJobMapper;
     private final KnowledgeBaseService knowledgeBaseService;
-    private final SyncJobService syncJobService;
     private final CurrentAccessContext currentAccessContext;
     private final TenantAccessService tenantAccessService;
 
@@ -56,9 +51,7 @@ public class WorkspaceService {
         Set<Long> accessibleKnowledgeBaseIds = knowledgeBases.stream().map(KnowledgeBase::getId).collect(Collectors.toSet());
 
         long documentCount = 0;
-        long pendingSyncJobCount = 0;
         List<DocumentVO> recentDocuments = List.of();
-        List<SyncJobVO> recentSyncJobs = List.of();
         if (!accessibleKnowledgeBaseIds.isEmpty()) {
             LambdaQueryWrapper<Document> docQuery = new LambdaQueryWrapper<>();
             docQuery.eq(Document::getTenantId, tenant.getId())
@@ -77,31 +70,14 @@ public class WorkspaceService {
             recentDocuments = documentMapper.selectList(recentDocumentQuery).stream()
                 .map(this::convertDocument)
                 .toList();
-
-            LambdaQueryWrapper<SyncJob> pendingSyncQuery = new LambdaQueryWrapper<>();
-            pendingSyncQuery.eq(SyncJob::getTenantId, tenant.getId())
-                .in(SyncJob::getKnowledgeBaseId, accessibleKnowledgeBaseIds)
-                .ne(SyncJob::getStatus, "SUCCESS");
-            pendingSyncJobCount = syncJobMapper.selectCount(pendingSyncQuery);
-
-            LambdaQueryWrapper<SyncJob> recentSyncQuery = new LambdaQueryWrapper<>();
-            recentSyncQuery.eq(SyncJob::getTenantId, tenant.getId())
-                .in(SyncJob::getKnowledgeBaseId, accessibleKnowledgeBaseIds)
-                .orderByDesc(SyncJob::getCreatedAt)
-                .last("LIMIT 5");
-            recentSyncJobs = syncJobMapper.selectList(recentSyncQuery).stream().map(syncJobService::convertToVO).toList();
         }
 
         WorkspaceDashboardVO dashboard = new WorkspaceDashboardVO();
         dashboard.setWorkspace(convertWorkspace(tenant, members.size()));
         dashboard.setKnowledgeBaseCount(knowledgeBases.size());
         dashboard.setDocumentCount(documentCount);
-        dashboard.setPublicKnowledgeBaseCount(knowledgeBases.stream().filter(item -> item.getIsPublic() != null && item.getIsPublic() == 1).count());
-        dashboard.setSyncEnabledKnowledgeBaseCount(knowledgeBases.stream().filter(item -> item.getSyncEnabled() != null && item.getSyncEnabled() == 1).count());
-        dashboard.setPendingSyncJobCount(pendingSyncJobCount);
         dashboard.setKnowledgeBases(knowledgeBaseVOs);
         dashboard.setRecentDocuments(recentDocuments);
-        dashboard.setRecentSyncJobs(recentSyncJobs);
         dashboard.setMembers(members.stream().map(this::convertMember).collect(Collectors.toList()));
         return dashboard;
     }

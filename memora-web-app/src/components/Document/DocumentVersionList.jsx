@@ -32,7 +32,7 @@ const DocumentVersionList = ({
             <div className={styles.actions}>
               <button
                 type="button"
-                className={styles.actionButton}
+                className={`${styles.actionButton} ${comparingVersionId === version.id ? styles.actionButtonActive : ''}`}
                 onClick={() => onToggleCompare(version.id)}
               >
                 {comparingVersionId === version.id ? '收起对比' : '对比'}
@@ -49,9 +49,9 @@ const DocumentVersionList = ({
           </div>
           <p className={styles.remark}>{version.remark || '自动快照'}</p>
           <div className={styles.meta}>
-            <span className="ui-chip">{version.format}</span>
-            <span className="ui-chip">{version.sourceType}</span>
-            <span className="ui-chip">操作人 {version.userId}</span>
+            <span>{version.format}</span>
+            <span className={styles.metaDivider} aria-hidden="true" />
+            <span>操作人 {version.userId}</span>
           </div>
           <div className={styles.preview}>
             {version.contentText || version.content || '当前版本未记录正文摘要。'}

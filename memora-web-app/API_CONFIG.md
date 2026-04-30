@@ -55,9 +55,6 @@ VITE_API_BASE_URL=http://localhost:8080
 - `PUT /api/v1/knowledge-bases/{id}/members`
 - `GET /api/v1/knowledge-bases/{id}/documents`
 - `GET /api/v1/knowledge-bases/{id}/document-tree`
-- `GET /api/v1/knowledge-bases/{id}/sync-jobs`
-- `POST /api/v1/knowledge-bases/{id}/sync-jobs/trigger`
-- `GET /api/v1/knowledge-bases/stats`
 
 ### 文档
 
@@ -74,7 +71,6 @@ VITE_API_BASE_URL=http://localhost:8080
 - `GET /api/v1/documents/{id}/versions`
 - `GET /api/v1/documents/versions/{versionId}`
 - `POST /api/v1/documents/{id}/rollback/{versionId}`
-- `POST /api/v1/documents/search`
 
 ---
 
@@ -97,3 +93,4 @@ VITE_API_BASE_URL=http://localhost:8080
 1. 当前会话已从固定 `userId=1` 升级为 demo bearer token，会话由登录接口返回。
 2. 前端统一通过拦截器处理 token 和错误响应。
 3. 当前真实认证和组织身份体系仍未接入，这一层仍是占位实现。
+4. 当前公开 API 只围绕 Web 主链路提供能力，不再暴露本地同步相关入口。

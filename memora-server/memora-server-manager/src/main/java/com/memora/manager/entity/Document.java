@@ -41,24 +41,14 @@ public class Document {
 
     private Integer depth;
 
-    private String sourceType;
-
-    private String sourcePath;
-
-    private String syncStatus;
-
     private Integer versionNo;
     
     private Integer status; // 1:正常 0:删除
-    
-    private Integer isPublic; // 0:私有 1:公开
     
     private Integer viewCount;
     
     private Integer sortOrder;
 
-    private LocalDateTime publishedAt;
-    
     private LocalDateTime createdAt;
     
     private LocalDateTime updatedAt;

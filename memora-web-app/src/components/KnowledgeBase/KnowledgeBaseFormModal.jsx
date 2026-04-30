@@ -5,10 +5,6 @@ const DEFAULT_FORM = {
   name: '',
   slug: '',
   description: '',
-  sourceType: 'MANUAL',
-  syncEnabled: false,
-  localRootPath: '',
-  isPublic: false,
 }
 
 const KnowledgeBaseFormModal = ({
@@ -33,10 +29,6 @@ const KnowledgeBaseFormModal = ({
       name: initialValues?.name || '',
       slug: initialValues?.slug || '',
       description: initialValues?.description || '',
-      sourceType: initialValues?.sourceType || 'MANUAL',
-      syncEnabled: Boolean(initialValues?.syncEnabled),
-      localRootPath: initialValues?.localRootPath || '',
-      isPublic: Boolean(initialValues?.isPublic),
     })
   }, [initialValues, open])
 
@@ -62,19 +54,11 @@ const KnowledgeBaseFormModal = ({
       setLocalError('知识库名称不能为空')
       return
     }
-    if (form.syncEnabled && !form.localRootPath.trim()) {
-      setLocalError('启用本地同步时必须填写本地根目录')
-      return
-    }
 
     await onSubmit({
       name: form.name.trim(),
       slug: form.slug.trim() || undefined,
       description: form.description.trim(),
-      sourceType: form.sourceType,
-      syncEnabled: form.syncEnabled ? 1 : 0,
-      localRootPath: form.syncEnabled ? form.localRootPath.trim() : '',
-      isPublic: form.isPublic ? 1 : 0,
     })
   }
 
@@ -86,7 +70,7 @@ const KnowledgeBaseFormModal = ({
             <p className={styles.eyebrow}>知识库工作区</p>
             <h2 className={styles.title}>{mode === 'create' ? '新建知识库' : '知识库设置'}</h2>
             <p className={styles.description}>
-              {mode === 'create' ? '先填写名称，创建后直接进入知识库继续新建文档。' : '调整名称、说明和同步方式。'}
+              {mode === 'create' ? '先填写名称，创建后直接进入知识库继续新建文档。' : '调整名称和说明，保持知识库边界清晰。'}
             </p>
           </div>
           <button type="button" className={styles.closeButton} onClick={onClose}>
@@ -121,48 +105,6 @@ const KnowledgeBaseFormModal = ({
               onChange={(event) => handleChange('description', event.target.value)}
               rows={4}
               placeholder="描述知识库面向的业务场景、对象和维护方式"
-            />
-          </label>
-
-          <div className={styles.grid}>
-            <label className={styles.field}>
-              <span>来源类型</span>
-              <select
-                value={form.sourceType}
-                onChange={(event) => handleChange('sourceType', event.target.value)}
-              >
-                <option value="MANUAL">手工维护</option>
-                <option value="LOCAL_SYNC">本地同步</option>
-                <option value="HYBRID">混合模式</option>
-              </select>
-            </label>
-
-            <label className={styles.switchField}>
-              <span>公开访问</span>
-              <input
-                type="checkbox"
-                checked={form.isPublic}
-                onChange={(event) => handleChange('isPublic', event.target.checked)}
-              />
-            </label>
-          </div>
-
-          <label className={styles.switchField}>
-            <span>启用本地同步</span>
-            <input
-              type="checkbox"
-              checked={form.syncEnabled}
-              onChange={(event) => handleChange('syncEnabled', event.target.checked)}
-            />
-          </label>
-
-          <label className={styles.field}>
-            <span>本地根目录</span>
-            <input
-              value={form.localRootPath}
-              onChange={(event) => handleChange('localRootPath', event.target.value)}
-              placeholder="/mnt/projects/knowledge-base"
-              disabled={!form.syncEnabled}
             />
           </label>
 

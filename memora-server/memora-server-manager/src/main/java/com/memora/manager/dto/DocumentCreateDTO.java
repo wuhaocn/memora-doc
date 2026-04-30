@@ -37,12 +37,5 @@ public class DocumentCreateDTO {
     
     private Long userId; // 临时字段，后续从鉴权中获取
 
-    private String sourceType;
-
-    @Size(max = 500, message = "来源路径长度不能超过500个字符")
-    private String sourcePath;
-
-    private Integer isPublic;
-
     private Integer sortOrder;
 }

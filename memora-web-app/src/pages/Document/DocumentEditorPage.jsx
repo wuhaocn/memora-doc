@@ -2,7 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react
 import { useNavigate, useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 import Header from '../../components/Layout/Header'
-import DocumentShareDrawer from '../../components/Document/DocumentShareDrawer'
+import DocumentReadLinkDrawer from '../../components/Document/DocumentReadLinkDrawer'
 import DocumentVersionDiff from '../../components/Document/DocumentVersionDiff'
 import DocumentVersionList from '../../components/Document/DocumentVersionList'
 import { documentApi } from '../../services/api/documentApi'
@@ -23,14 +23,13 @@ const PAGE_STATUS = {
 const DocumentEditorPage = () => {
   const { documentId } = useParams()
   const navigate = useNavigate()
-  const [scrolled, setScrolled] = useState(false)
   const [pageStatus, setPageStatus] = useState(PAGE_STATUS.LOADING)
   const [pageErrorMessage, setPageErrorMessage] = useState('')
   const [document, setDocument] = useState(null)
   const [versions, setVersions] = useState([])
   const [versionsLoading, setVersionsLoading] = useState(false)
   const [versionsOpen, setVersionsOpen] = useState(false)
-  const [shareOpen, setShareOpen] = useState(false)
+  const [readLinkOpen, setReadLinkOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState(null)
   const [rollingBackVersionId, setRollingBackVersionId] = useState(null)
@@ -106,16 +105,6 @@ const DocumentEditorPage = () => {
       loadVersions()
     }
   }, [loadVersions, pageStatus])
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 24)
-    }
-
-    handleScroll()
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   const comparingVersion = useMemo(() => {
     return versions.find((version) => version.id === comparingVersionId) || null
@@ -214,49 +203,9 @@ const DocumentEditorPage = () => {
   }
 
   return (
-    <div className={`${styles.page} ${scrolled ? styles.pageScrolled : ''}`}>
+    <div className={styles.page}>
       <Header onToggleSidebar={() => {}} showMenuButton={false} />
       <div className={`${styles.pageShell} ${versionsOpen ? styles.pageShellWide : ''}`}>
-        <header className={`${styles.topbar} ${scrolled ? styles.topbarScrolled : ''}`}>
-          <div className={styles.topbarMain}>
-            <button type="button" className={styles.backButton} onClick={backToKnowledgeBase}>
-              返回知识库
-            </button>
-            <div className={styles.documentIdentity}>
-              <div className={styles.eyebrow}>文档编辑</div>
-              <h1 className={styles.title}>{document.title}</h1>
-              <div className={styles.meta}>
-                <span className={styles.metaPill}>v{document.versionNo}</span>
-                <span className={styles.metaPill}>{saving ? '保存中…' : '已进入编辑'}</span>
-                <span className={styles.metaPill}>{dayjs(document.updatedAt).format('MM-DD HH:mm')}</span>
-              </div>
-            </div>
-          </div>
-          <div className={styles.topbarActions}>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={() => navigate(`/docs/${document.id}`)}
-            >
-              阅读文档
-            </button>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={() => setShareOpen(true)}
-            >
-              分享文档
-            </button>
-            <button
-              type="button"
-              className={styles.ghostButton}
-              onClick={() => setVersionsOpen(true)}
-            >
-              版本
-            </button>
-          </div>
-        </header>
-
         {feedback && (
           <div className={`${styles.feedback} ${feedback.type === 'error' ? styles.feedbackError : styles.feedbackSuccess}`}>
             {feedback.message}
@@ -265,6 +214,46 @@ const DocumentEditorPage = () => {
 
         <section className={`${styles.workspace} ${versionsOpen ? styles.workspaceWithDrawer : ''}`}>
           <div className={styles.editorPanel}>
+            <header className={styles.topbar}>
+              <div className={styles.topbarMain}>
+                <button type="button" className={styles.backButton} onClick={backToKnowledgeBase}>
+                  返回知识库
+                </button>
+                <div className={styles.documentIdentity}>
+                  <div className={styles.eyebrow}>文档编辑</div>
+                  <h1 className={styles.title}>{document.title}</h1>
+                  <div className={styles.meta}>
+                    <span className={styles.metaPill}>v{document.versionNo}</span>
+                    <span className={styles.metaPill}>{saving ? '保存中…' : '可编辑'}</span>
+                    <span className={styles.metaPill}>最近更新 {dayjs(document.updatedAt).format('MM-DD HH:mm')}</span>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.topbarActions}>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => navigate(`/docs/${document.id}`)}
+                >
+                  阅读文档
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => setReadLinkOpen(true)}
+                >
+                  复制阅读链接
+                </button>
+                <button
+                  type="button"
+                  className={styles.ghostButton}
+                  onClick={() => setVersionsOpen(true)}
+                >
+                  查看版本
+                </button>
+              </div>
+            </header>
+
             <Suspense fallback={<div className={styles.editorLoading}>正在加载编辑器...</div>}>
               <DocumentRichEditor
                 focusMode
@@ -310,11 +299,11 @@ const DocumentEditorPage = () => {
         </section>
       </div>
 
-      <DocumentShareDrawer
-        open={shareOpen}
+      <DocumentReadLinkDrawer
+        open={readLinkOpen}
         documentId={document.id}
         title={document.title}
-        onClose={() => setShareOpen(false)}
+        onClose={() => setReadLinkOpen(false)}
       />
     </div>
   )

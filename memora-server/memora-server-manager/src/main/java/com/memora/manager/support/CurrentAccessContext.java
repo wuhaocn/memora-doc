@@ -1,5 +1,6 @@
 package com.memora.manager.support;
 
+import com.memora.common.exception.BusinessException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestAttributes;
@@ -8,45 +9,28 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Component
 public class CurrentAccessContext {
-    private static final long FALLBACK_TENANT_ID = 1L;
-    private static final long FALLBACK_USER_ID = 1L;
-    private static final String TENANT_HEADER = "X-Tenant-Id";
-    private static final String USER_HEADER = "X-User-Id";
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String DEMO_TOKEN_PREFIX = "demo:";
 
     public Long getCurrentTenantId() {
-        AccessTokenPayload tokenPayload = resolveAccessTokenPayload();
-        return tokenPayload != null ? tokenPayload.tenantId() : resolveLongHeader(TENANT_HEADER, FALLBACK_TENANT_ID);
+        return requireAccessTokenPayload().tenantId();
     }
 
     public Long getCurrentUserId() {
-        AccessTokenPayload tokenPayload = resolveAccessTokenPayload();
-        return tokenPayload != null ? tokenPayload.userId() : resolveLongHeader(USER_HEADER, FALLBACK_USER_ID);
+        return requireAccessTokenPayload().userId();
     }
 
     public String buildDemoAccessToken(Long tenantId, Long userId) {
         return DEMO_TOKEN_PREFIX + tenantId + ":" + userId;
     }
 
-    private Long resolveLongHeader(String headerName, long fallbackValue) {
-        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-        if (!(attributes instanceof ServletRequestAttributes servletAttributes)) {
-            return fallbackValue;
+    private AccessTokenPayload requireAccessTokenPayload() {
+        AccessTokenPayload tokenPayload = resolveAccessTokenPayload();
+        if (tokenPayload == null) {
+            throw new BusinessException(401, "当前请求未携带有效会话");
         }
-
-        HttpServletRequest request = servletAttributes.getRequest();
-        String rawValue = request.getHeader(headerName);
-        if (rawValue == null || rawValue.isBlank()) {
-            return fallbackValue;
-        }
-
-        try {
-            return Long.parseLong(rawValue);
-        } catch (NumberFormatException ex) {
-            return fallbackValue;
-        }
+        return tokenPayload;
     }
 
     private AccessTokenPayload resolveAccessTokenPayload() {

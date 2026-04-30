@@ -39,7 +39,7 @@ const LoginPage = () => {
           <p className={styles.eyebrow}>Memora 文档工作区</p>
           <h1 className={styles.title}>进入知识与文档工作台</h1>
           <p className={styles.description}>
-            在同一个工作区里继续管理知识库、撰写文档、查看版本并分享内容。当前登录页保持轻量，只保留进入主流程所需的信息。
+            在同一个工作区里继续管理知识库、撰写文档、查看版本并复制阅读链接。当前登录页保持轻量，只保留进入主流程所需的信息。
           </p>
           <div className={styles.featureList}>
             <div className={styles.featureItem}>
@@ -48,7 +48,7 @@ const LoginPage = () => {
             </div>
             <div className={styles.featureItem}>
               <strong>文档</strong>
-              <span>从新建到编辑、阅读、分享一条线完成</span>
+              <span>从新建到编辑、阅读、复制阅读链接一条线完成</span>
             </div>
             <div className={styles.featureItem}>
               <strong>版本</strong>

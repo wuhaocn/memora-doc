@@ -21,14 +21,134 @@ const closeListIfNeeded = (html, listType) => {
   return `${html}</${listType}>`
 }
 
+const HTML_LIKE_PATTERN = /<[a-z][\s\S]*>/i
+const TEXT_NODE = 3
+const ELEMENT_NODE = 1
+const BLOCKED_TAGS = new Set(['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'link', 'meta'])
+const ALLOWED_TAGS = new Set([
+  'article',
+  'blockquote',
+  'br',
+  'code',
+  'div',
+  'em',
+  'figure',
+  'figcaption',
+  'h1',
+  'h2',
+  'h3',
+  'hr',
+  'img',
+  'li',
+  'ol',
+  'p',
+  'pre',
+  'section',
+  'span',
+  'strong',
+  'ul',
+])
+const GLOBAL_ALLOWED_ATTRS = new Set(['class'])
+const TAG_ALLOWED_ATTRS = {
+  div: new Set(['data-type', 'data-diagram-type', 'data-content', 'data-width', 'data-height']),
+  img: new Set(['src', 'alt', 'title']),
+}
+
+const isSafeUrl = (value, { allowDataImage = false } = {}) => {
+  const normalized = value.trim()
+  if (!normalized) {
+    return false
+  }
+
+  const lowerValue = normalized.toLowerCase()
+  if (lowerValue.startsWith('javascript:') || lowerValue.startsWith('vbscript:')) {
+    return false
+  }
+  if (lowerValue.startsWith('data:')) {
+    return allowDataImage && /^data:image\//i.test(normalized)
+  }
+
+  return true
+}
+
+const sanitizeNode = (node, ownerDocument) => {
+  if (node.nodeType === TEXT_NODE) {
+    return ownerDocument.createTextNode(node.textContent || '')
+  }
+
+  if (node.nodeType !== ELEMENT_NODE) {
+    return ownerDocument.createDocumentFragment()
+  }
+
+  const tagName = node.tagName.toLowerCase()
+  if (BLOCKED_TAGS.has(tagName)) {
+    return ownerDocument.createDocumentFragment()
+  }
+
+  if (!ALLOWED_TAGS.has(tagName)) {
+    const fragment = ownerDocument.createDocumentFragment()
+    Array.from(node.childNodes).forEach((childNode) => {
+      fragment.appendChild(sanitizeNode(childNode, ownerDocument))
+    })
+    return fragment
+  }
+
+  const sanitizedElement = ownerDocument.createElement(tagName)
+  const allowedAttrs = TAG_ALLOWED_ATTRS[tagName] || new Set()
+
+  Array.from(node.attributes).forEach((attribute) => {
+    const attrName = attribute.name.toLowerCase()
+    if (attrName.startsWith('on')) {
+      return
+    }
+    if (!GLOBAL_ALLOWED_ATTRS.has(attrName) && !allowedAttrs.has(attrName)) {
+      return
+    }
+
+    const attrValue = attribute.value || ''
+    if (attrName === 'src' && !isSafeUrl(attrValue, { allowDataImage: true })) {
+      return
+    }
+
+    sanitizedElement.setAttribute(attribute.name, attrValue)
+  })
+
+  Array.from(node.childNodes).forEach((childNode) => {
+    sanitizedElement.appendChild(sanitizeNode(childNode, ownerDocument))
+  })
+  return sanitizedElement
+}
+
+export const sanitizeRichHtml = (value) => {
+  const normalized = (value || '').trim()
+  if (!normalized) {
+    return ''
+  }
+
+  if (typeof DOMParser === 'undefined' || typeof document === 'undefined') {
+    return escapeHtml(normalized)
+  }
+
+  const parser = new DOMParser()
+  const parsedDocument = parser.parseFromString(`<body>${normalized}</body>`, 'text/html')
+  const safeDocument = document.implementation.createHTMLDocument('')
+  const container = safeDocument.createElement('div')
+
+  Array.from(parsedDocument.body.childNodes).forEach((node) => {
+    container.appendChild(sanitizeNode(node, safeDocument))
+  })
+
+  return container.innerHTML
+}
+
 export const toEditorHtml = (value) => {
   if (!value || !value.trim()) {
     return '<p></p>'
   }
 
   const trimmed = value.trim()
-  if (/<[a-z][\s\S]*>/i.test(trimmed)) {
-    return trimmed
+  if (HTML_LIKE_PATTERN.test(trimmed)) {
+    return sanitizeRichHtml(trimmed) || '<p></p>'
   }
 
   const lines = trimmed.split('\n')
@@ -134,7 +254,7 @@ export const toEditorHtml = (value) => {
     html = closeListIfNeeded(html, listType)
   }
   flushCodeBlock()
-  return html || '<p></p>'
+  return sanitizeRichHtml(html) || '<p></p>'
 }
 
 export const summarizePlainText = (value, maxLength = 180) => {

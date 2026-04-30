@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 import Header from '../../components/Layout/Header'
-import DocumentShareDrawer from '../../components/Document/DocumentShareDrawer'
+import DocumentReadLinkDrawer from '../../components/Document/DocumentReadLinkDrawer'
 import { documentApi } from '../../services/api/documentApi'
+import { sanitizeRichHtml } from '../../utils/documentContent'
 import styles from './DocumentReaderPage.module.css'
 
 const PAGE_STATUS = {
@@ -17,13 +18,11 @@ const PAGE_STATUS = {
 const DocumentReaderPage = () => {
   const { documentId } = useParams()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const [scrolled, setScrolled] = useState(false)
   const [pageStatus, setPageStatus] = useState(PAGE_STATUS.LOADING)
   const [pageErrorMessage, setPageErrorMessage] = useState('')
   const [document, setDocument] = useState(null)
-  const [shareOpen, setShareOpen] = useState(false)
-  const isShareMode = searchParams.get('share') === '1'
+  const [readLinkOpen, setReadLinkOpen] = useState(false)
 
   const loadDocument = useCallback(async () => {
     try {
@@ -86,6 +85,8 @@ const DocumentReaderPage = () => {
     })
   }
 
+  const safeDocumentContent = useMemo(() => sanitizeRichHtml(document?.content || ''), [document?.content])
+
   if (pageStatus === PAGE_STATUS.LOADING) {
     return <div className={styles.state}>正在加载文档...</div>
   }
@@ -124,29 +125,27 @@ const DocumentReaderPage = () => {
             <button
               type="button"
               className={styles.backButton}
-              onClick={isShareMode ? () => navigate('/') : backToKnowledgeBase}
+              onClick={backToKnowledgeBase}
             >
-              {isShareMode ? '返回工作台' : '返回知识库'}
+              返回知识库
             </button>
             <div className={styles.documentIdentity}>
-              <div className={styles.eyebrow}>{isShareMode ? '分享阅读' : '文档阅读'}</div>
+              <div className={styles.eyebrow}>文档阅读</div>
               <h1 className={styles.title}>{document.title}</h1>
               <div className={styles.documentSubline}>
                 <span className={styles.metaPill}>v{document.versionNo}</span>
                 <span className={styles.metaPill}>{dayjs(document.updatedAt).format('MM-DD HH:mm')}</span>
-                <span className={styles.metaPill}>{isShareMode ? '只读访问' : '阅读模式'}</span>
+                <span className={styles.metaPill}>阅读模式</span>
               </div>
             </div>
           </div>
           <div className={styles.documentToolbar}>
-            <button type="button" className={styles.secondaryButton} onClick={() => setShareOpen(true)}>
-              分享文档
+            <button type="button" className={styles.secondaryButton} onClick={() => setReadLinkOpen(true)}>
+              复制阅读链接
             </button>
-            {!isShareMode && (
-              <button type="button" className={styles.primaryButton} onClick={() => navigate(`/docs/${document.id}/edit`)}>
-                继续编辑
-              </button>
-            )}
+            <button type="button" className={styles.primaryButton} onClick={() => navigate(`/docs/${document.id}/edit`)}>
+              继续编辑
+            </button>
           </div>
         </header>
 
@@ -160,7 +159,7 @@ const DocumentReaderPage = () => {
                       <h2 className={styles.paperTitle}>{document.title}</h2>
                       {document.summary ? <p className={styles.documentSummary}>{document.summary}</p> : null}
                     </div>
-                    <div className={styles.richPreviewContent} dangerouslySetInnerHTML={{ __html: document.content }} />
+                    <div className={styles.richPreviewContent} dangerouslySetInnerHTML={{ __html: safeDocumentContent }} />
                   </div>
                 </article>
               ) : (
@@ -179,11 +178,11 @@ const DocumentReaderPage = () => {
         </main>
       </div>
 
-      <DocumentShareDrawer
-        open={shareOpen}
+      <DocumentReadLinkDrawer
+        open={readLinkOpen}
         documentId={document.id}
         title={document.title}
-        onClose={() => setShareOpen(false)}
+        onClose={() => setReadLinkOpen(false)}
       />
     </div>
   )

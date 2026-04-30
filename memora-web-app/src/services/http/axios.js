@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { getCurrentUser } from '../../utils/user'
+import { clearCurrentUser, getCurrentUser } from '../../utils/user'
 
 // 创建axios实例
 const httpClient = axios.create({
@@ -27,8 +27,14 @@ httpClient.interceptors.request.use(
 // 响应拦截器
 httpClient.interceptors.response.use(
   (response) => {
-    // 直接返回后端响应的数据
-    return response.data
+    const payload = response.data
+    if (payload?.code === 200) {
+      return payload
+    }
+    if (payload?.code === 401) {
+      clearCurrentUser()
+    }
+    return Promise.reject(payload)
   },
   (error) => {
     // 处理错误响应

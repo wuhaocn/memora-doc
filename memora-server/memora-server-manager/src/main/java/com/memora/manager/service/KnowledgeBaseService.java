@@ -14,7 +14,6 @@ import com.memora.manager.mapper.TenantMapper;
 import com.memora.manager.support.CurrentAccessContext;
 import com.memora.manager.support.SlugUtils;
 import com.memora.manager.support.TenantAccessService;
-import com.memora.manager.vo.KnowledgeBaseStatsVO;
 import com.memora.manager.vo.KnowledgeBaseVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -46,18 +45,11 @@ public class KnowledgeBaseService extends ServiceImpl<KnowledgeBaseMapper, Knowl
         knowledgeBase.setUserId(dto.getUserId() == null ? currentAccessContext.getCurrentUserId() : dto.getUserId());
         knowledgeBase.setSlug(resolveKnowledgeBaseSlug(dto.getName(), dto.getSlug()));
         knowledgeBase.setStatus(1);
-        knowledgeBase.setIsPublic(dto.getIsPublic() == null ? 0 : dto.getIsPublic());
-        knowledgeBase.setSourceType(StringUtils.hasText(dto.getSourceType()) ? dto.getSourceType() : "MANUAL");
-        knowledgeBase.setSyncEnabled(dto.getSyncEnabled() == null ? 0 : dto.getSyncEnabled());
-        knowledgeBase.setSyncStatus(knowledgeBase.getSyncEnabled() == 1 ? "IDLE" : "DISABLED");
         knowledgeBase.setDocumentCount(0);
         knowledgeBase.setViewCount(0);
         knowledgeBase.setSortOrder(0);
         knowledgeBase.setCreatedAt(LocalDateTime.now());
         knowledgeBase.setUpdatedAt(LocalDateTime.now());
-        if (knowledgeBase.getSyncEnabled() == 1) {
-            knowledgeBase.setLastSyncAt(LocalDateTime.now());
-        }
 
         this.save(knowledgeBase);
         return convertToVO(knowledgeBase);
@@ -67,7 +59,6 @@ public class KnowledgeBaseService extends ServiceImpl<KnowledgeBaseMapper, Knowl
     public KnowledgeBaseVO update(Long id, KnowledgeBaseUpdateDTO dto) {
         KnowledgeBase knowledgeBase = getAccessibleEntity(id);
         tenantAccessService.requireKnowledgeBaseManageAccess(knowledgeBase);
-
         if (StringUtils.hasText(dto.getName())) {
             knowledgeBase.setName(dto.getName());
             if (!StringUtils.hasText(dto.getSlug())) {
@@ -83,19 +74,7 @@ public class KnowledgeBaseService extends ServiceImpl<KnowledgeBaseMapper, Knowl
         if (dto.getCover() != null) {
             knowledgeBase.setCover(dto.getCover());
         }
-        if (dto.getSourceType() != null) {
-            knowledgeBase.setSourceType(dto.getSourceType());
-        }
-        if (dto.getSyncEnabled() != null) {
-            knowledgeBase.setSyncEnabled(dto.getSyncEnabled());
-            knowledgeBase.setSyncStatus(dto.getSyncEnabled() == 1 ? "IDLE" : "DISABLED");
-        }
-        if (dto.getLocalRootPath() != null) {
-            knowledgeBase.setLocalRootPath(dto.getLocalRootPath());
-        }
-        if (dto.getIsPublic() != null) {
-            knowledgeBase.setIsPublic(dto.getIsPublic());
-        }
+
         knowledgeBase.setUpdatedAt(LocalDateTime.now());
         this.updateById(knowledgeBase);
         return convertToVO(knowledgeBase);
@@ -135,56 +114,6 @@ public class KnowledgeBaseService extends ServiceImpl<KnowledgeBaseMapper, Knowl
         Long currentTenantId = currentAccessContext.getCurrentTenantId();
         tenantAccessService.requireTenantMember(currentTenantId);
         return listAccessibleKnowledgeBases(null, currentTenantId, userId).stream().map(this::convertToVO).collect(Collectors.toList());
-    }
-
-    public KnowledgeBaseStatsVO getStats(Long tenantId, Long userId) {
-        Long accessibleTenantId = resolveAccessibleTenantId(tenantId);
-        tenantAccessService.requireTenantMember(accessibleTenantId);
-        List<KnowledgeBase> list = listAccessibleKnowledgeBases(null, accessibleTenantId, userId);
-
-        KnowledgeBaseStatsVO statsVO = new KnowledgeBaseStatsVO();
-        statsVO.setTotalCount(list.size());
-        statsVO.setPublicCount(list.stream().filter(item -> item.getIsPublic() != null && item.getIsPublic() == 1).count());
-        statsVO.setPrivateCount(list.stream().filter(item -> item.getIsPublic() == null || item.getIsPublic() == 0).count());
-        statsVO.setTotalDocumentCount(list.stream().mapToLong(item -> item.getDocumentCount() == null ? 0 : item.getDocumentCount()).sum());
-        statsVO.setTotalViewCount(list.stream().mapToLong(item -> item.getViewCount() == null ? 0 : item.getViewCount()).sum());
-
-        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
-        statsVO.setRecent7DaysCount(list.stream()
-            .filter(item -> item.getCreatedAt() != null && item.getCreatedAt().isAfter(sevenDaysAgo))
-            .count());
-        return statsVO;
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public String generateShareLink(Long id, Integer expireDays) {
-        KnowledgeBase knowledgeBase = getAccessibleEntity(id);
-        tenantAccessService.requireKnowledgeBaseManageAccess(knowledgeBase);
-        String token = knowledgeBase.getSlug() + "-" + knowledgeBase.getId() + "-" + System.currentTimeMillis();
-        return "/public/knowledge-bases/" + knowledgeBase.getId() + "?token=" + token + "&expireDays=" + expireDays;
-    }
-
-    public KnowledgeBaseVO getByShareToken(String shareToken) {
-        if (!StringUtils.hasText(shareToken) || !shareToken.contains("-")) {
-            throw new BusinessException(400, "无效的分享链接");
-        }
-
-        String[] parts = shareToken.split("-");
-        Long knowledgeBaseId = Long.parseLong(parts[parts.length - 2]);
-        KnowledgeBase knowledgeBase = getActiveEntity(knowledgeBaseId);
-        knowledgeBase.setViewCount((knowledgeBase.getViewCount() == null ? 0 : knowledgeBase.getViewCount()) + 1);
-        this.updateById(knowledgeBase);
-        return convertToVO(knowledgeBase, false);
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public KnowledgeBaseVO setPublicStatus(Long id, Integer isPublic) {
-        KnowledgeBase knowledgeBase = getAccessibleEntity(id);
-        tenantAccessService.requireKnowledgeBaseManageAccess(knowledgeBase);
-        knowledgeBase.setIsPublic(isPublic);
-        knowledgeBase.setUpdatedAt(LocalDateTime.now());
-        this.updateById(knowledgeBase);
-        return convertToVO(knowledgeBase);
     }
 
     private LambdaQueryWrapper<KnowledgeBase> buildActiveQuery(String keyword, Long tenantId, Long userId) {

@@ -66,11 +66,4 @@ export const documentApi = {
   rollbackToVersion: async (id, versionId) => {
     return httpClient.post(`/api/v1/documents/${id}/rollback/${versionId}`)
   },
-
-  advancedSearch: async (params = {}, searchRequest) => {
-    const { page = 1, size = 20 } = params
-    return httpClient.post('/api/v1/documents/search', searchRequest, {
-      params: { page, size },
-    })
-  },
 }

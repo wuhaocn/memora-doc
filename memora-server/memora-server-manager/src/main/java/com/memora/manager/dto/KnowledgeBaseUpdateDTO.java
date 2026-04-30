@@ -19,12 +19,4 @@ public class KnowledgeBaseUpdateDTO {
     
     private String cover;
 
-    private String sourceType;
-
-    private Integer syncEnabled;
-
-    @Size(max = 500, message = "本地路径长度不能超过500个字符")
-    private String localRootPath;
-
-    private Integer isPublic;
 }

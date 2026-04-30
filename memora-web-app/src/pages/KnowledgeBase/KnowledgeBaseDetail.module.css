@@ -312,14 +312,14 @@
 
 .contentGrid {
   display: grid;
-  grid-template-columns: minmax(224px, 244px) minmax(0, 1fr) minmax(268px, 308px);
+  grid-template-columns: minmax(0, 1fr) minmax(268px, 308px);
   gap: 0;
   margin-top: 6px;
   align-items: start;
 }
 
 .contentGridWide {
-  grid-template-columns: minmax(224px, 244px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(268px, 308px);
 }
 
 .contentGridNoLeft {
@@ -972,7 +972,7 @@
   font-size: 12px;
 }
 
-.syncStatusBadge {
+.contextBadge {
   display: inline-flex;
   align-items: center;
   min-height: 28px;
@@ -1005,11 +1005,11 @@
 
 @media (max-width: 1380px) {
   .contentGrid {
-    grid-template-columns: minmax(216px, 232px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
   }
 
   .contentGridWide {
-    grid-template-columns: minmax(216px, 232px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
   }
 
   .contextPanel {
@@ -1028,7 +1028,7 @@
   }
 
   .contentGridNoLeft {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
   }
 
   .documentColumn {

@@ -41,8 +41,6 @@ public class DocumentVersion {
      * 纯文本内容
      */
     private String contentText;
-
-    private String sourceType;
     
     /**
      * 创建人ID

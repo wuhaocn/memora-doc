@@ -25,12 +25,4 @@ public class KnowledgeBaseCreateDTO {
     
     private Long userId; // 临时字段，后续从鉴权中获取
 
-    private String sourceType;
-
-    private Integer syncEnabled;
-
-    @Size(max = 500, message = "本地路径长度不能超过500个字符")
-    private String localRootPath;
-
-    private Integer isPublic;
 }

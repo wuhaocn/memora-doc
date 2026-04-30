@@ -40,15 +40,9 @@ CREATE TABLE IF NOT EXISTS knowledge_base (
   cover VARCHAR(255),
   user_id BIGINT NOT NULL,
   status TINYINT DEFAULT 1,
-  is_public TINYINT DEFAULT 0,
-  source_type VARCHAR(30) DEFAULT 'MANUAL',
-  sync_enabled TINYINT DEFAULT 0,
-  local_root_path VARCHAR(500),
-  sync_status VARCHAR(30) DEFAULT 'IDLE',
   document_count INT DEFAULT 0,
   view_count INT DEFAULT 0,
   sort_order INT DEFAULT 0,
-  last_sync_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (tenant_id) REFERENCES tenant(id) ON DELETE CASCADE
@@ -94,17 +88,12 @@ CREATE TABLE IF NOT EXISTS document (
   parent_id BIGINT DEFAULT 0,
   path VARCHAR(500) NOT NULL,
   depth INT DEFAULT 0,
-  source_type VARCHAR(30) DEFAULT 'MANUAL',
-  source_path VARCHAR(500),
-  sync_status VARCHAR(30) DEFAULT 'MANUAL',
   version_no INT DEFAULT 1,
   status TINYINT DEFAULT 1,
-  is_public TINYINT DEFAULT 0,
   view_count INT DEFAULT 0,
   sort_order INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  published_at TIMESTAMP NULL,
   FOREIGN KEY (knowledge_base_id) REFERENCES knowledge_base(id) ON DELETE CASCADE,
   FOREIGN KEY (tenant_id) REFERENCES tenant(id) ON DELETE CASCADE
 );
@@ -125,7 +114,6 @@ CREATE TABLE IF NOT EXISTS document_version (
   format VARCHAR(30) DEFAULT 'MARKDOWN',
   content CLOB,
   content_text CLOB,
-  source_type VARCHAR(30) DEFAULT 'MANUAL',
   user_id BIGINT NOT NULL,
   remark VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -134,26 +122,3 @@ CREATE TABLE IF NOT EXISTS document_version (
 
 CREATE INDEX IF NOT EXISTS idx_version_doc_id ON document_version(document_id);
 CREATE INDEX IF NOT EXISTS idx_version_version ON document_version(version);
-
--- 同步任务表
-CREATE TABLE IF NOT EXISTS sync_job (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  tenant_id BIGINT NOT NULL,
-  knowledge_base_id BIGINT NOT NULL,
-  job_type VARCHAR(30) DEFAULT 'LOCAL_SCAN',
-  trigger_type VARCHAR(30) DEFAULT 'MANUAL',
-  local_path VARCHAR(500),
-  status VARCHAR(30) DEFAULT 'SUCCESS',
-  scanned_count INT DEFAULT 0,
-  changed_count INT DEFAULT 0,
-  message VARCHAR(500),
-  started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  finished_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (tenant_id) REFERENCES tenant(id) ON DELETE CASCADE,
-  FOREIGN KEY (knowledge_base_id) REFERENCES knowledge_base(id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_sync_job_tenant_id ON sync_job(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_sync_job_kb_id ON sync_job(knowledge_base_id);
-CREATE INDEX IF NOT EXISTS idx_sync_job_created_at ON sync_job(created_at);

@@ -8,12 +8,9 @@ import com.memora.manager.dto.KnowledgeBaseUpdateDTO;
 import com.memora.manager.service.DocumentService;
 import com.memora.manager.service.KnowledgeBaseMemberService;
 import com.memora.manager.service.KnowledgeBaseService;
-import com.memora.manager.service.SyncJobService;
 import com.memora.manager.vo.DocumentVO;
 import com.memora.manager.vo.KnowledgeBaseMemberVO;
-import com.memora.manager.vo.KnowledgeBaseStatsVO;
 import com.memora.manager.vo.KnowledgeBaseVO;
-import com.memora.manager.vo.SyncJobVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +24,6 @@ public class KnowledgeBaseController {
     private final KnowledgeBaseService knowledgeBaseService;
     private final KnowledgeBaseMemberService knowledgeBaseMemberService;
     private final DocumentService documentService;
-    private final SyncJobService syncJobService;
 
     @PostMapping
     public Result<KnowledgeBaseVO> create(@Valid @RequestBody KnowledgeBaseCreateDTO dto) {
@@ -98,37 +94,5 @@ public class KnowledgeBaseController {
     @GetMapping("/{id}/document-tree")
     public Result<List<DocumentVO>> getDocumentTree(@PathVariable Long id) {
         return Result.success(documentService.listTreeByKnowledgeBaseId(id));
-    }
-
-    @GetMapping("/{id}/sync-jobs")
-    public Result<List<SyncJobVO>> getSyncJobs(@PathVariable Long id) {
-        return Result.success(syncJobService.listByKnowledgeBaseId(id));
-    }
-
-    @PostMapping("/{id}/sync-jobs/trigger")
-    public Result<SyncJobVO> triggerSync(@PathVariable Long id) {
-        return Result.success(syncJobService.triggerKnowledgeBaseSync(id));
-    }
-
-    @GetMapping("/stats")
-    public Result<KnowledgeBaseStatsVO> getStats(
-        @RequestParam(required = false) Long tenantId,
-        @RequestParam(required = false) Long userId) {
-        return Result.success(knowledgeBaseService.getStats(tenantId, userId));
-    }
-
-    @PostMapping("/{id}/share")
-    public Result<String> generateShareLink(@PathVariable Long id, @RequestParam(defaultValue = "7") Integer expireDays) {
-        return Result.success(knowledgeBaseService.generateShareLink(id, expireDays));
-    }
-
-    @GetMapping("/shared")
-    public Result<KnowledgeBaseVO> getByShareToken(@RequestParam String token) {
-        return Result.success(knowledgeBaseService.getByShareToken(token));
-    }
-
-    @PutMapping("/{id}/public-status")
-    public Result<KnowledgeBaseVO> setPublicStatus(@PathVariable Long id, @RequestParam Integer isPublic) {
-        return Result.success(knowledgeBaseService.setPublicStatus(id, isPublic));
     }
 }

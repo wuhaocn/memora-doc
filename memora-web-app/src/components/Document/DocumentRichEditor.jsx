@@ -4,7 +4,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Image from '@tiptap/extension-image'
 import DiagramExtension from '../../extensions/DiagramExtension'
-import { toEditorHtml } from '../../utils/documentContent'
+import { sanitizeRichHtml, toEditorHtml } from '../../utils/documentContent'
 import styles from './DocumentRichEditor.module.css'
 
 const DocumentRichEditor = ({
@@ -67,7 +67,7 @@ const DocumentRichEditor = ({
       return
     }
     await onSave({
-      content: editor.getHTML(),
+      content: sanitizeRichHtml(editor.getHTML()),
       contentText: editor.getText(),
     })
   }
@@ -118,52 +118,65 @@ const DocumentRichEditor = ({
   ]
   const structureTools = tools.slice(0, 3)
   const formatTools = tools.slice(3)
+  const insertTools = [
+    {
+      key: 'image',
+      label: '图片',
+      onClick: handleInsertImage,
+    },
+    {
+      key: 'mermaid',
+      label: '图表',
+      onClick: handleInsertMermaid,
+    },
+  ]
 
   return (
     <div className={`${styles.editorShell} ${focusMode ? styles.focusMode : ''}`}>
       <div className={styles.toolbar}>
-        <div className={styles.toolbarMain}>
-          <div className={styles.toolSection}>
-            <span className={styles.toolSectionLabel}>结构</span>
+        <div className={styles.toolbarInner}>
+          <div className={styles.toolbarMain}>
+            <div className={styles.toolSection}>
+              <span className={styles.toolSectionLabel}>文本层级</span>
+              <div className={styles.toolGroup}>
+                {structureTools.map((tool) => (
+                  <button
+                    key={tool.key}
+                    type="button"
+                    className={`${styles.toolButton} ${tool.active ? styles.active : ''}`}
+                    onClick={tool.onClick}
+                  >
+                    {tool.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className={styles.toolDivider} />
+            <div className={styles.toolSection}>
+              <span className={styles.toolSectionLabel}>常用格式</span>
+              <div className={styles.toolGroup}>
+                {formatTools.map((tool) => (
+                  <button
+                    key={tool.key}
+                    type="button"
+                    className={`${styles.toolButton} ${tool.active ? styles.active : ''}`}
+                    onClick={tool.onClick}
+                  >
+                    {tool.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className={styles.toolbarAside}>
+            <span className={styles.toolSectionLabel}>插入内容</span>
             <div className={styles.toolGroup}>
-              {structureTools.map((tool) => (
-                <button
-                  key={tool.key}
-                  type="button"
-                  className={`${styles.toolButton} ${tool.active ? styles.active : ''}`}
-                  onClick={tool.onClick}
-                >
+              {insertTools.map((tool) => (
+                <button key={tool.key} type="button" className={styles.toolButton} onClick={tool.onClick}>
                   {tool.label}
                 </button>
               ))}
             </div>
-          </div>
-          <div className={styles.toolDivider} />
-          <div className={styles.toolSection}>
-            <span className={styles.toolSectionLabel}>格式</span>
-            <div className={styles.toolGroup}>
-              {formatTools.map((tool) => (
-                <button
-                  key={tool.key}
-                  type="button"
-                  className={`${styles.toolButton} ${tool.active ? styles.active : ''}`}
-                  onClick={tool.onClick}
-                >
-                  {tool.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className={styles.toolbarAside}>
-          <span className={styles.toolSectionLabel}>插入</span>
-          <div className={styles.toolGroup}>
-            <button type="button" className={styles.toolButton} onClick={handleInsertImage}>
-              图片
-            </button>
-            <button type="button" className={styles.toolButton} onClick={handleInsertMermaid}>
-              Mermaid
-            </button>
           </div>
         </div>
       </div>
@@ -175,14 +188,16 @@ const DocumentRichEditor = ({
       </div>
 
       <div className={styles.footer}>
-        <div className={styles.footerHint}>编辑内容会在保存后生成新版本。</div>
-        <div className={styles.footerActions}>
-          <button type="button" className={styles.secondaryButton} onClick={onCancel}>
-            取消
-          </button>
-          <button type="button" className={styles.primaryButton} disabled={saving} onClick={handleSave}>
-            {saving ? '保存中...' : '保存并生成版本'}
-          </button>
+        <div className={styles.footerInner}>
+          <div className={styles.footerHint}>保存后生成新版本，历史内容可随时回滚。</div>
+          <div className={styles.footerActions}>
+            <button type="button" className={styles.secondaryButton} onClick={onCancel}>
+              取消
+            </button>
+            <button type="button" className={styles.primaryButton} disabled={saving} onClick={handleSave}>
+              {saving ? '保存中...' : '保存并生成版本'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

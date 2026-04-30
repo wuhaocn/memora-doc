@@ -47,15 +47,13 @@ const Sidebar = ({ collapsed }) => {
               <IconFolder />
             </div>
             {!collapsed && (
-              <div className={styles.itemContent}>
-                <div className={styles.itemTitle}>{kb.name}</div>
-                <div className={styles.itemMeta}>
-                  <span>{kb.documentCount || 0} 篇文档</span>
-                  <span className={styles.itemMetaDivider} />
-                  <span>{kb.syncEnabled ? '已同步连接' : '手工维护'}</span>
+                <div className={styles.itemContent}>
+                  <div className={styles.itemTitle}>{kb.name}</div>
+                  <div className={styles.itemMeta}>
+                    <span>{kb.documentCount || 0} 篇文档</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </Link>
         ))}
       </div>

@@ -36,24 +36,14 @@ public class DocumentVO {
 
     private Integer depth;
 
-    private String sourceType;
-
-    private String sourcePath;
-
-    private String syncStatus;
-
     private Integer versionNo;
     
     private Integer status;
-    
-    private Integer isPublic;
-    
+
     private Integer viewCount;
     
     private Integer sortOrder;
 
-    private LocalDateTime publishedAt;
-    
     private LocalDateTime createdAt;
     
     private LocalDateTime updatedAt;
