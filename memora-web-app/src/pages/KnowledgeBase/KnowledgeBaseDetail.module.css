@@ -112,8 +112,7 @@
 
 .metaPill,
 .modeBadge,
-.folderStageStat,
-.syncPathLabel {
+.folderStageStat {
   display: inline-flex;
   align-items: center;
   min-height: 26px;
@@ -125,7 +124,6 @@
   font-weight: 600;
 }
 
-.syncBadge,
 .modeBadgeActive {
   display: inline-flex;
   align-items: center;
@@ -153,7 +151,7 @@
 .treePanel,
 .documentCard,
 .versionPanel,
-.syncPanel,
+.contextCard,
 .emptyPanel,
 .contextPanel {
   border: 1px solid rgba(15, 23, 42, 0.06);
@@ -424,7 +422,7 @@
 .panelHeader span,
 .panelHint,
 .versionEyebrow,
-.syncSummaryEyebrow {
+.contextSummaryEyebrow {
   color: #7b8290;
   font-size: 12px;
 }
@@ -441,7 +439,7 @@
 .treeModeActions,
 .folderStageMeta,
 .folderStageActions,
-.syncMeta {
+.contextMeta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -903,14 +901,14 @@
   margin-bottom: 12px;
 }
 
-.syncDisclosure {
+.contextDisclosure {
   border: 1px solid rgba(15, 23, 42, 0.06);
   border-radius: 18px;
   background: #ffffff;
   overflow: hidden;
 }
 
-.syncDisclosureSummary {
+.contextDisclosureSummary {
   list-style: none;
   display: flex;
   align-items: center;
@@ -920,50 +918,50 @@
   cursor: pointer;
 }
 
-.syncDisclosureSummary::-webkit-details-marker {
+.contextDisclosureSummary::-webkit-details-marker {
   display: none;
 }
 
-.syncSummaryMain {
+.contextSummaryMain {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.syncSummaryTitle {
+.contextSummaryTitle {
   font-size: 16px;
   color: #1f2329;
 }
 
-.syncSummaryMeta,
-.syncSummaryHint {
+.contextSummaryMeta,
+.contextSummaryHint {
   color: #7b8290;
   font-size: 12px;
 }
 
-.syncPanel {
+.contextCard {
   padding: 0 16px 16px;
   border: 0;
   border-top: 1px solid rgba(15, 23, 42, 0.06);
   border-radius: 0;
 }
 
-.syncList {
+.contextList {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 14px;
 }
 
-.syncItem {
+.contextItem {
   padding: 14px;
   border-radius: 16px;
   background: #f8fafc;
   border: 1px solid rgba(15, 23, 42, 0.05);
 }
 
-.syncTop {
+.contextItemTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -984,23 +982,14 @@
   font-weight: 700;
 }
 
-.syncMessage {
+.contextMessage {
   margin-top: 10px;
   color: #374151;
   line-height: 1.7;
 }
 
-.syncMeta {
+.contextMeta {
   margin-top: 12px;
-}
-
-.syncPath {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #5f6672;
-  font-size: 12px;
 }
 
 @media (max-width: 1380px) {
@@ -1044,7 +1033,7 @@
     border: 0;
   }
 
-  .syncDisclosure {
+  .contextDisclosure {
     background: #f8fafc;
   }
 }
@@ -1111,7 +1100,7 @@
   .treePanel,
   .contextPanel,
   .documentStage,
-  .syncPanel {
+  .contextCard {
     padding: 14px 0;
   }
 
@@ -1141,11 +1130,7 @@
     font-size: 26px;
   }
 
-  .syncMeta {
+  .contextMeta {
     align-items: flex-start;
-  }
-
-  .syncPath {
-    white-space: normal;
   }
 }

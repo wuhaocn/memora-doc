@@ -254,6 +254,7 @@ const KnowledgeBaseDetail = () => {
             selectedDocument={selectedDocument}
             canWriteKnowledgeBase={canWriteKnowledgeBase}
             canManageKnowledgeBase={canManageKnowledgeBase}
+            roleLabels={ROLE_LABELS}
           />
         )}
       </section>

@@ -95,9 +95,14 @@ memora-web-app/
 
 ## 当前产品与体验方向
 
-最新 UI 状态记录：
+最新 UI 阶段记录：
 
 - [workspace-ui-status-2026-04-29.md](./docs/workspace-ui-status-2026-04-29.md)
+
+说明：
+
+- 该文件用于记录最近一轮 Web 收口结果。
+- 当前 Web 的 canonical 范围仍以仓库根 README 和 `doc/` 文档为准。
 
 当前方向是：
 
@@ -196,6 +201,10 @@ Axios 基础配置：
 demo 账号：
 
 - `admin / 123456`
+
+说明：
+
+- 上述账号和 token 仅用于当前演示与联调，不代表正式认证方案。
 
 前端启动后会调用：
 

@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(getCurrentUser())
   const [sessionLoading, setSessionLoading] = useState(true)
 
-  const syncCurrentSession = async () => {
+  const refreshCurrentSession = async () => {
     if (!isLoggedIn()) {
       setCurrentUser(null)
       return null
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
         return
       }
 
-      await syncCurrentSession()
+      await refreshCurrentSession()
       if (!cancelled) {
         setSessionLoading(false)
       }
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!currentUser?.accessToken,
     login,
     logout,
-    syncCurrentSession,
+    refreshCurrentSession,
   }), [currentUser, sessionLoading])
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>

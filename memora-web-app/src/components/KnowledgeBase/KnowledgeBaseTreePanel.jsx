@@ -200,13 +200,13 @@ const KnowledgeBaseTreePanel = ({
             className={styles.search}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="搜索文档标题"
+            placeholder="按标题筛选当前知识库"
           />
         </div>
         <div className={styles.treeModeBar}>
           <div className={styles.treeModeMeta}>
             <span className={`${styles.modeBadge} ${batchMode ? styles.modeBadgeActive : ''}`}>
-              {batchMode ? '批量整理中' : hasActiveSearch ? '搜索结果' : '全部内容'}
+              {batchMode ? '批量整理中' : hasActiveSearch ? '标题筛选结果' : '全部内容'}
             </span>
           </div>
           <div className={styles.treeModeActions}>
